@@ -70,7 +70,6 @@ class Graph():
             self.paths.append(paths_aux)     
         self.printSolution(dist)
         print(self.paths)
-
 """
 class Graph:
  
@@ -107,18 +106,21 @@ class Graph:
     # A utility function to print
     # the constructed distance
     # array
-    def printSolution(self, dist, parent):
+    """def printSolution(self, dist, parent):
         src = 0
         print("Vertex \t\tDistance from Source\tPath")
         for i in range(1, len(dist)):
             print("\n%d --> %d \t\t%d \t\t\t\t\t" % (src, i, dist[i])),
-            self.printPath(parent,i)
+            self.printPath(parent,i)"""
+    def printSolution(self, dist, parent, origin, dest):
+        print("Origin: %d\n Destination: %d\nDistance: %d\nPath: " % (origin, dest, dist[dest]))
+        self.printPath(parent,dest)
  
  
     '''Function that implements Dijkstra's single source shortest path
     algorithm for a graph represented using adjacency matrix
     representation'''
-    def dijkstra(self, graph, src):
+    def dijkstra(self, graph, src, dest):
  
         row = len(graph)
         col = len(graph[0])
@@ -169,7 +171,7 @@ class Graph:
  
  
         # print the constructed distance array
-        self.printSolution(dist,parent)
+        self.printSolution(dist, parent, src, dest)
 
 
 file = open('distancia_entre_nodes.csv')
@@ -191,6 +193,7 @@ for row in csvreader:
 # Driver program
 g = Graph()
 #g.graph = graph
- 
-g.dijkstra(graph, 1)
+
+#Inputs Grafo, origem, destino
+g.dijkstra(graph, 2, 7)
  
