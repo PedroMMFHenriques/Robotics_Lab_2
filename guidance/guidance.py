@@ -2,6 +2,7 @@ import csv
 import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
+from math import *
 
 class Graph:
  
@@ -106,7 +107,7 @@ class Graph:
         self.printSolution(dist, parent, src, dest)
 
 def calc_dist(x1,y1,x2,y2):
-    dist = np.sqrt((x1-x2)^2 + (y1-y2)^2)
+    dist = sqrt((x1-x2)**2 + (y1-y2)**2)
     return dist
 
 def check_area(x, y, area_list):
@@ -119,78 +120,113 @@ def check_area(x, y, area_list):
 def add_node(x,y, node_graph, area_list):
     areas = check_area(x,y,area_list)
     if not areas: return None  #point not in an area
-    """
+   
 
-    # ainda nao adicionei tudo
+    #add 1 column for the new node
+    node_graph = list(np.hstack((node_graph, np.zeros((len(node_graph),1)))))
 
-    new_node = np.zeros(len(node_graph[0]) + 1)
-    node_graph = np.append(node_graph, new_node, axis=1)
+    new_node = list(np.zeros(len(node_graph[0])))
     for area in areas:
         if area == 'A':
             new_node[0] = calc_dist(x,y,63,340)
+            node_graph[0][len(node_graph[0])-1] = new_node[0]
             new_node[1] = calc_dist(x,y,1083,257)  
+            node_graph[1][len(node_graph[0])-1] = new_node[1]
         elif area == 'B':
             new_node[6] = calc_dist(x,y,1307,340)
+            node_graph[6][len(node_graph[0])-1] = new_node[6]
             new_node[1] = calc_dist(x,y,1083,257)
+            node_graph[1][len(node_graph[0])-1] = new_node[1]
         elif area == 'C':
             new_node[6] = calc_dist(x,y,1307,340)
+            node_graph[7][len(node_graph[0])-1] = calc_dist(x,y,2625,1626)
         elif area == 'D':
             new_node[7] = calc_dist(x,y,2625,1626)
+            node_graph[2][len(node_graph[0])-1] = calc_dist(x,y,2511,205)
         elif area == 'E':
             new_node[2] = calc_dist(x,y,2511,205)
+            node_graph[2][len(node_graph[0])-1] = new_node[2]
             new_node[3] = calc_dist(x,y,2681,191)
+            node_graph[3][len(node_graph[0])-1] = new_node[3]
         elif area == 'F':
             new_node[3] = calc_dist(x,y,2681,191)
+            node_graph[3][len(node_graph[0])-1] = new_node[3]
             new_node[4] = calc_dist(x,y,3732,129)
+            node_graph[4][len(node_graph[0])-1] = new_node[4]
         elif area == 'G':
             new_node[4] = calc_dist(x,y,3732,129)
+            node_graph[4][len(node_graph[0])-1] = new_node[4]
             new_node[5] = calc_dist(x,y,4193,191)
+            node_graph[5][len(node_graph[0])-1] = new_node[5]
         elif area == 'H':
             new_node[5] = calc_dist(x,y,4193,191)
+            node_graph[5][len(node_graph[0])-1] = new_node[5]
             new_node[10] = calc_dist(x,y,4385,2086)
+            node_graph[10][len(node_graph[0])-1] = new_node[10]
         elif area == 'I':
             new_node[3] = calc_dist(x,y,2681,191)
+            node_graph[8][len(node_graph[0])-1] = calc_dist(x,y,2805,1606)
         elif area == 'J':
             new_node[7] = calc_dist(x,y,2625,1626)
+            node_graph[8][len(node_graph[0])-1] = calc_dist(x,y,2805,1606)
         elif area == 'K':
             new_node[9] = calc_dist(x,y,2731,1808)
+            node_graph[7][len(node_graph[0])-1] = calc_dist(x,y,2625,1626)
         elif area == 'L':
             new_node[8] = calc_dist(x,y,2805,1606)
+            node_graph[9][len(node_graph[0])-1] = calc_dist(x,y,2731,1808)
         elif area == 'M':
             new_node[11] = calc_dist(x,y,1391,3134)
+            node_graph[6][len(node_graph[0])-1] = calc_dist(x,y,1307,340)
         elif area == 'N':
             new_node[12] = calc_dist(x,y,1391,3946)
+            node_graph[6][len(node_graph[0])-1] = calc_dist(x,y,1391,3134)
         elif area == 'O':
             new_node[9] = calc_dist(x,y,2731,1808)
+            node_graph[9][len(node_graph[0])-1] = new_node[9]
             new_node[15] = calc_dist(x,y,2959,3826)
+            node_graph[15][len(node_graph[0])-1] = new_node[15]
         elif area == 'P':
             new_node[13] = calc_dist(x,y,1611,3928)
+            node_graph[12][len(node_graph[0])-1] = calc_dist(x,y,1391,3946)
         elif area == 'Q':
             new_node[17] = calc_dist(x,y,1449,4876)
+            node_graph[12][len(node_graph[0])-1] = calc_dist(x,y,1391,3946)
         elif area == 'R':
             new_node[13] = calc_dist(x,y,1611,3928)
+            node_graph[18][len(node_graph[0])-1] = calc_dist(x,y,1679,4860)
         elif area == 'S':
             new_node[14] = calc_dist(x,y,2761,3852)
+            node_graph[13][len(node_graph[0])-1] = calc_dist(x,y,1611,3928)
         elif area == 'T':
             new_node[15] = calc_dist(x,y,2959,3826)
+            node_graph[14][len(node_graph[0])-1] = calc_dist(x,y,2761,3852)
         elif area == 'U':
             new_node[19] = calc_dist(x,y,2893,5279)
+            node_graph[14][len(node_graph[0])-1] = calc_dist(x,y,2761,3852)
         elif area == 'V':
             new_node[15] = calc_dist(x,y,2959,3826)
+            node_graph[20][len(node_graph[0])-1] = calc_dist(x,y,3059,5269)
         elif area == 'W':
             new_node[18] = calc_dist(x,y,1679,4860)
+            node_graph[17][len(node_graph[0])-1] = calc_dist(x,y,1449,4876)
         elif area == 'X':
             new_node[19] = calc_dist(x,y,2893,5279)
+            node_graph[19][len(node_graph[0])-1] = calc_dist(x,y,2893,5279)
             new_node[20] = calc_dist(x,y,3059,5269)
+            node_graph[20][len(node_graph[0])-1] = calc_dist(x,y,3059,5269)
         elif area == 'Y':
             new_node[20] = calc_dist(x,y,3059,5269)
+            node_graph[20][len(node_graph[0])-1] = calc_dist(x,y,3059,5269)
             new_node[21] = calc_dist(x,y,4585,5014)
+            node_graph[21][len(node_graph[0])-1] = calc_dist(x,y,4585,5014)
         elif area == 'Z':
             new_node[16] = calc_dist(x,y,4491,3169)
+            node_graph[16][len(node_graph[0])-1] = calc_dist(x,y,4491,3169)
             new_node[21] = calc_dist(x,y,4585,5014)
+            node_graph[21][len(node_graph[0])-1] = calc_dist(x,y,4585,5014)
         
-        node_graph.append(new_node)"""
-    #node_graph.append(new_node)
+    node_graph.append(new_node)
 
     return node_graph
 
@@ -239,6 +275,7 @@ area_list = read_area_file()
 g = Graph()
 #g.graph = graph
 
+n_nodes = len(nodes_graph)
 valid_points = False
 
 while(not valid_points):
@@ -272,7 +309,6 @@ while(not valid_points):
         continue
 
     valid_points = True
-
 #Inputs Grafo, origem, destino
-g.dijkstra(nodes_graph, 2, 7)
+print(g.dijkstra(nodes_graph, n_nodes, n_nodes+1))
  
