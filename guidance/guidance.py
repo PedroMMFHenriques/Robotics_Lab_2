@@ -309,6 +309,6 @@ while(not valid_points):
         continue
 
     valid_points = True
-#Inputs Grafo, origem, destino
-print(g.dijkstra(nodes_graph, n_nodes, n_nodes+1))
+
+g.dijkstra(nodes_graph, n_nodes, n_nodes+1)
  
