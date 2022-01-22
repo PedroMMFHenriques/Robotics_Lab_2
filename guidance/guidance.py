@@ -117,9 +117,9 @@ def check_area(x, y, area_list):
     return areas
 
 def add_node(x,y, node_graph, area_list):
-    """areas = check_area(x,y,area_list)
-    if not areas: return areas  #point not in an area
-    
+    areas = check_area(x,y,area_list)
+    if not areas: return None  #point not in an area
+    """
 
     # ainda nao adicionei tudo
 
@@ -202,16 +202,16 @@ def read_nodes_file():
 
     csvreader = csv.reader(file1)
 
-
     header = []
     header = next(csvreader)
 
     nodes_graph = []
     for row in csvreader:
-        for i in range(22):
+        for i in range(len(row)):
             row[i] = float(row[i])
         nodes_graph.append(row)
     return nodes_graph
+
 
 def read_area_file():
     file = open('rectangles_position.csv')
@@ -224,7 +224,7 @@ def read_area_file():
 
     area_list = []
     for row in csvreader:
-        for i in range(9):
+        for i in range(len(row)):
             if(i != 0): row[i] = int(row[i])
         area_list.append(row)
     return area_list
@@ -261,12 +261,13 @@ while(not valid_points):
         continue
 
     nodes_graph = add_node(x_init, y_init, nodes_graph, area_list)
-    if(not nodes_graph): 
+    if(nodes_graph == None):
+        nodes_graph = []
         print("Invalid input (outside of valid area)!")
         continue
 
     nodes_graph = add_node(x_end, y_end, nodes_graph, area_list)
-    if(not nodes_graph): 
+    if(nodes_graph == None): 
         print("Invalid input (outside of valid area)!")
         continue
 
