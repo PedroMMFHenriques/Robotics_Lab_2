@@ -133,7 +133,8 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
             node_graph[1][-1] = new_node[1]
 
             if(final_areas != None and area in final_areas):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+                new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                node_graph[-1][-1] = new_node[-2]
 
         elif area == 'B':
             new_node[6] = calc_dist(x,y,1307,340)
@@ -142,21 +143,26 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
             node_graph[1][-1] = new_node[1]
 
             if(final_areas != None and area in final_areas):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+                new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                node_graph[-1][-1] = new_node[-2]
 
         elif area == 'C':
             new_node[6] = calc_dist(x,y,1307,340)
             node_graph[7][-1] = calc_dist(x,y,2625,1626)
 
-            if(final_areas != None and area in final_areas and xy_final[0]<x):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][6] < new_node[6]):
+                    new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'D':
             new_node[7] = calc_dist(x,y,2625,1626)
             node_graph[2][-1] = calc_dist(x,y,2511,205)
 
-            if(final_areas != None and area in final_areas and xy_final[1]>y):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][7] < new_node[7]):
+                    new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'E':
             new_node[2] = calc_dist(x,y,2511,205)
@@ -165,7 +171,8 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
             node_graph[3][-1] = new_node[3]
 
             if(final_areas != None and area in final_areas):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+                new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                node_graph[-1][-1] = new_node[-2]
 
         elif area == 'F':
             new_node[3] = calc_dist(x,y,2681,191)
@@ -174,7 +181,8 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
             node_graph[4][-1] = new_node[4]
 
             if(final_areas != None and area in final_areas):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+                new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                node_graph[-1][-1] = new_node[-2]
 
         elif area == 'G':
             new_node[4] = calc_dist(x,y,3732,129)
@@ -183,7 +191,8 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
             node_graph[5][-1] = new_node[5]
 
             if(final_areas != None and area in final_areas):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+                new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                node_graph[-1][-1] = new_node[-2]
 
         elif area == 'H':
             new_node[5] = calc_dist(x,y,4193,191)
@@ -192,49 +201,56 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
             node_graph[10][-1] = new_node[10]
 
             if(final_areas != None and area in final_areas):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+                new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                node_graph[-1][-1] = new_node[-2]
 
         elif area == 'I':
             new_node[3] = calc_dist(x,y,2681,191)
             node_graph[8][-1] = calc_dist(x,y,2805,1606)
 
-            if(final_areas != None and area in final_areas and xy_final[1]<y):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][3] < new_node[3]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'J':
             new_node[7] = calc_dist(x,y,2625,1626)
             node_graph[8][-1] = calc_dist(x,y,2805,1606)
 
-            if(final_areas != None and area in final_areas and xy_final[0]<x):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][7] < new_node[7]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'K':
             new_node[9] = calc_dist(x,y,2731,1808)
             node_graph[7][-1] = calc_dist(x,y,2625,1626)
 
-            if(final_areas != None and area in final_areas and xy_final[1]>y):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][9] < new_node[9]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
                 
         elif area == 'L':
             new_node[8] = calc_dist(x,y,2805,1606)
             node_graph[9][-1] = calc_dist(x,y,2731,1808)
 
-            if(final_areas != None and area in final_areas and xy_final[1]<y):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][8] < new_node[8]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'M':
             new_node[11] = calc_dist(x,y,1391,3134)
             node_graph[6][-1] = calc_dist(x,y,1307,340)
 
-            if(final_areas != None and area in final_areas and xy_final[1]>y):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][11] < new_node[11]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'N':
             new_node[12] = calc_dist(x,y,1391,3946)
             node_graph[6][-1] = calc_dist(x,y,1391,3134)
 
-            if(final_areas != None and area in final_areas and xy_final[1]>y):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][12] < new_node[12]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'O':
             new_node[9] = calc_dist(x,y,2731,1808)
@@ -243,63 +259,74 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
             node_graph[15][-1] = new_node[15]
 
             if(final_areas != None and area in final_areas):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+                new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                node_graph[-1][-1] = new_node[-2]
 
         elif area == 'P':
             new_node[13] = calc_dist(x,y,1611,3928)
             node_graph[12][-1] = calc_dist(x,y,1391,3946)
 
-            if(final_areas != None and area in final_areas and xy_final[0]>x):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][13] < new_node[13]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'Q':
             new_node[17] = calc_dist(x,y,1449,4876)
             node_graph[12][-1] = calc_dist(x,y,1391,3946)
 
-            if(final_areas != None and area in final_areas and xy_final[1]>y):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][17] < new_node[17]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'R':
             new_node[13] = calc_dist(x,y,1611,3928)
             node_graph[18][-1] = calc_dist(x,y,1679,4860)
 
-            if(final_areas != None and area in final_areas and xy_final[1]<y):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][13] < new_node[13]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
                 
         elif area == 'S':
             new_node[14] = calc_dist(x,y,2761,3852)
             node_graph[13][-1] = calc_dist(x,y,1611,3928)
 
-            if(final_areas != None and area in final_areas and xy_final[0]>x):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][14] < new_node[14]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'T':
-            new_node[15] = calc_dist(x,y,2959,3826)
-            node_graph[14][-1] = calc_dist(x,y,2761,3852)
+            new_node[15] = calc_dist(x,y,2893,5279)
+            node_graph[15][-1] = calc_dist(x,y,2893,5279)
+            new_node[14] = calc_dist(x,y,3059,5269)
+            node_graph[14][-1] = calc_dist(x,y,3059,5269)
 
-            if(final_areas != None and area in final_areas and xy_final[0]>x):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                node_graph[-1][-1] = new_node[-2]
 
         elif area == 'U':
             new_node[19] = calc_dist(x,y,2893,5279)
             node_graph[14][-1] = calc_dist(x,y,2761,3852)
 
-            if(final_areas != None and area in final_areas and xy_final[1]>y):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][19] < new_node[19]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'V':
             new_node[15] = calc_dist(x,y,2959,3826)
             node_graph[20][-1] = calc_dist(x,y,3059,5269)
 
-            if(final_areas != None and area in final_areas and xy_final[1]<y):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][15] < new_node[15]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'W':
             new_node[18] = calc_dist(x,y,1679,4860)
             node_graph[17][-1] = calc_dist(x,y,1449,4876)
 
-            if(final_areas != None and area in final_areas and xy_final[0]>x):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+            if(final_areas != None and area in final_areas):
+                if(node_graph[-1][18] < new_node[18]): new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                else: node_graph[-1][-1] = calc_dist(x,y,xy_final[0],xy_final[1])
 
         elif area == 'X':
             new_node[19] = calc_dist(x,y,2893,5279)
@@ -308,7 +335,8 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
             node_graph[20][-1] = calc_dist(x,y,3059,5269)
 
             if(final_areas != None and area in final_areas):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+                new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                node_graph[-1][-1] = new_node[-2]
 
         elif area == 'Y':
             new_node[20] = calc_dist(x,y,3059,5269)
@@ -317,7 +345,8 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
             node_graph[21][-1] = calc_dist(x,y,4585,5014)
 
             if(final_areas != None and area in final_areas):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+                new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                node_graph[-1][-1] = new_node[-2]
 
         elif area == 'Z':
             new_node[16] = calc_dist(x,y,4491,3169)
@@ -326,7 +355,8 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
             node_graph[21][-1] = calc_dist(x,y,4585,5014)
 
             if(final_areas != None and area in final_areas):
-                new_node[-1] = calc_dist(x,y,xy_final[0],xy_final[1])
+                new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
+                node_graph[-1][-1] = new_node[-2]
         
     node_graph.append(new_node)
 
@@ -404,13 +434,12 @@ while(not valid_points):
         print("Invalid input (outside of valid area)!")
         continue
 
-    nodes_graph = add_node(x_init, y_init, nodes_graph, area_list, final_areas=final_areas, xy_final=[x_end, y_end])
+    nodes_graph, aux = add_node(x_init, y_init, nodes_graph, area_list, final_areas=final_areas, xy_final=[x_end, y_end])
     if(nodes_graph == None):
         nodes_graph = []
         print("Invalid input (outside of valid area)!")
         continue
-
     
     valid_points = True
 
-g.dijkstra(nodes_graph, n_nodes, n_nodes+1)
+g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
