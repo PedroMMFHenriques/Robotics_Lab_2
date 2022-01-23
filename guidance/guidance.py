@@ -3,6 +3,7 @@ import numpy as np
 from collections import defaultdict
 import matplotlib.pyplot as plt
 from math import *
+from scipy.interpolate import *
 
 class Graph:
  
@@ -525,22 +526,33 @@ path = g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
 nodes_list.append((x_end, y_end))
 nodes_list.append((x_init, y_init))
 
-"""
+checkpoints_x = []
+checkpoints_y = []
 for i in range(len(path)):
-    if(i == 1): theta = 
-    
-"""
+    checkpoints_x.append(nodes_list[path[i]][0])
+    checkpoints_y.append(nodes_list[path[i]][1])
+
+num_pts = np.arange(len(path))
+
+cs_x = CubicSpline(num_pts, checkpoints_x)
+cs_y = CubicSpline(num_pts, checkpoints_y)
+
+time = np.arange(0, len(path)-1, 0.01)
+
+xx = cs_x(time)
+yy = cs_y(time)
 
 
-"""pos_interp1, vel_interp, orient = interpol(nodes_list[path[0]], nodes_list[path[1]], [0*sin(np.pi/2), 0*cos(np.pi/2)], [2*1.388*sin(0), 2*1.388*cos(0)], 1, 4, 5.555, 1)
-pos_interp2, vel_interp, orient = interpol(nodes_list[path[1]], nodes_list[path[2]], [0*sin(np.pi/2), 0*cos(np.pi/2)], [2*1.388*sin(0), 2*1.388*cos(0)], 1, 4, 5.555, 1)"""
-pos_interp1, vel_interp, orient = interpol(nodes_list[path[0]], nodes_list[path[1]], [3, 0], [-0.5, 0], 0, 2, 5.555, 1)
-pos_interp2, vel_interp, orient = interpol(nodes_list[path[1]], nodes_list[path[2]], [-0.5, 0], [0, 0], 0, 2, 5.555, 1)
 plt.imshow(mapa_ist)
+num = int(calc_dist(nodes_graph[path[0]][0], nodes_graph[path[0]][1], nodes_graph[path[1]][0], nodes_graph[path[1]][1])/20)
 
-for i in range(len(pos_interp1[0])):
-    plt.scatter(pos_interp1[0][i], pos_interp1[1][i], s = 5)
+plt.scatter(xx, yy, s = 10)
 
-for i in range(len(pos_interp2[0])):
-    plt.scatter(pos_interp2[0][i], pos_interp2[1][i], s = 5)
 plt.show()
+fout = open('pontos_saida.csv', 'w', newline='')
+writer = csv.writer(fout)
+for i in range(len(xx)):
+    writer.writerow([xx[i], yy[i]])
+
+fout.close()
+
