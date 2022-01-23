@@ -371,8 +371,8 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
 
 
 
-def read_nodes_file():
-    file1 = open('path_nodes_position.csv')
+def read_nodes_dist_file():
+    file1 = open('path_nodes_dist.csv')
     type(file1)
 
     csvreader = csv.reader(file1)
@@ -386,6 +386,22 @@ def read_nodes_file():
             row[i] = float(row[i])
         nodes_graph.append(row)
     return nodes_graph
+
+def read_nodes_list():
+    file = open('path_nodes_positions.csv')
+    type(file)
+
+    csvreader = csv.reader(file)
+
+    header = []
+    header = next(csvreader)
+
+    nodes_list = []
+    for row in csvreader:
+        for i in range(len(row)):
+            row[i] = int(row[i])
+        nodes_list.append(row)
+    return nodes_list
 
 
 def read_area_file():
@@ -427,7 +443,7 @@ def interpol(pos1, pos2, vel1, vel2, t1, t2, vel_max = 5.555, acc_max = 1):
     vel_y_interp = []
     orientation = []
     
-    for i in range(t1, t2, 0.1):
+    for i in np.arange(t1, t2, 0.1):
         x_aux = ai0x + ai1x*i + ai2x*(i**2) + ai3x*(i**3)
         vel_x_aux = ai1x + 2*ai2x*i + 3*ai3x*(i**2)
         if(vel_x_aux > vel_max): vel_x_aux = vel_max
@@ -454,8 +470,9 @@ def interpol(pos1, pos2, vel1, vel2, t1, t2, vel_max = 5.555, acc_max = 1):
 
 
 ######################## MAIN ############################
-nodes_graph = read_nodes_file()
+nodes_graph = read_nodes_dist_file()
 area_list = read_area_file()
+nodes_list = read_nodes_list()
 
 # Driver program
 g = Graph()
@@ -501,7 +518,29 @@ while(not valid_points):
         continue
     
     valid_points = True
+    #plt.close()
 
 path = g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
 
-interpol()
+nodes_list.append((x_end, y_end))
+nodes_list.append((x_init, y_init))
+
+"""
+for i in range(len(path)):
+    if(i == 1): theta = 
+    
+"""
+
+
+"""pos_interp1, vel_interp, orient = interpol(nodes_list[path[0]], nodes_list[path[1]], [0*sin(np.pi/2), 0*cos(np.pi/2)], [2*1.388*sin(0), 2*1.388*cos(0)], 1, 4, 5.555, 1)
+pos_interp2, vel_interp, orient = interpol(nodes_list[path[1]], nodes_list[path[2]], [0*sin(np.pi/2), 0*cos(np.pi/2)], [2*1.388*sin(0), 2*1.388*cos(0)], 1, 4, 5.555, 1)"""
+pos_interp1, vel_interp, orient = interpol(nodes_list[path[0]], nodes_list[path[1]], [3, 0], [-0.5, 0], 0, 2, 5.555, 1)
+pos_interp2, vel_interp, orient = interpol(nodes_list[path[1]], nodes_list[path[2]], [-0.5, 0], [0, 0], 0, 2, 5.555, 1)
+plt.imshow(mapa_ist)
+
+for i in range(len(pos_interp1[0])):
+    plt.scatter(pos_interp1[0][i], pos_interp1[1][i], s = 5)
+
+for i in range(len(pos_interp2[0])):
+    plt.scatter(pos_interp2[0][i], pos_interp2[1][i], s = 5)
+plt.show()
