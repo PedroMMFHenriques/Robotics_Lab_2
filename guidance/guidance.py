@@ -26,15 +26,18 @@ class Graph:
     # Function to print shortest path
     # from source to j
     # using parent array
-    def printPath(self, parent, j):
-         
+    def printPath(self, parent, j, path):
         #Base Case : If j is source
         if parent[j] == -1 :
             print(j)
+            path.append(j)
             return
-        self.printPath(parent , parent[j])
+
+        path.append(j)
+        self.printPath(parent , parent[j], path)
+        
         print (j)
-         
+        return(path)
  
     # A utility function to print
     # the constructed distance
@@ -46,8 +49,11 @@ class Graph:
             print("\n%d --> %d \t\t%d \t\t\t\t\t" % (src, i, dist[i])),
             self.printPath(parent,i)"""
     def printSolution(self, dist, parent, origin, dest):
-        print("Origin: %d\n Destination: %d\nDistance: %d\nPath: " % (origin, dest, dist[dest]))
-        self.printPath(parent,dest)
+        print("Origin: %d\n Destination: %d\nDistance: %d\nPath: " % (origin, dest, dist[dest])) #apagar?
+        path = []
+        path = self.printPath(parent,dest, path)
+        
+        return(path[::-1])
  
  
     '''Function that implements Dijkstra's single source shortest path
@@ -104,7 +110,8 @@ class Graph:
  
  
         # print the constructed distance array
-        self.printSolution(dist, parent, src, dest)
+
+        return(self.printSolution(dist, parent, src, dest))
 
 def calc_dist(x1,y1,x2,y2):
     dist = sqrt((x1-x2)**2 + (y1-y2)**2)
@@ -397,6 +404,53 @@ def read_area_file():
         area_list.append(row)
     return area_list
 
+def interpol(pos1, pos2, vel1, vel2, t1, t2, vel_max = 5.555, acc_max = 1):
+    
+    tfi = t2 - t1
+    #interpolacao x
+    ai0x = pos1[0]
+    ai1x = vel1[0]
+    
+    ai2x = (3/tfi**2)*(pos2[0] - pos1[0]) - (2/tfi)*vel1[0] - (1/tfi)*vel2[0]
+    ai3x = -(2/tfi**3)*(pos2[0] - pos1[0]) + (1/tfi**2)*(vel2[0] - vel1[0])
+    
+    #interpolacao y 
+    ai0y = pos1[1]
+    ai1y = vel1[1]
+    
+    ai2y = (3/tfi**2)*(pos2[1] - pos1[1]) - (2/tfi)*vel1[1] - (1/tfi)*vel2[1]
+    ai3y = -(2/tfi**3)*(pos2[1] - pos1[1]) + (1/tfi**2)*(vel2[1] - vel1[1])
+
+    x_interp = []
+    vel_x_interp = []
+    y_interp = []
+    vel_y_interp = []
+    orientation = []
+    
+    for i in range(t1, t2, 0.1):
+        x_aux = ai0x + ai1x*i + ai2x*(i**2) + ai3x*(i**3)
+        vel_x_aux = ai1x + 2*ai2x*i + 3*ai3x*(i**2)
+        if(vel_x_aux > vel_max): vel_x_aux = vel_max
+        
+        #Possivel interpolacao de aceleracao
+
+        x_interp.append(x_aux)
+        vel_x_interp.append(vel_x_aux)
+        
+        ############################################
+        y_aux = ai0y + ai1y*i + ai2y*(i**2) + ai3y*(i**3)
+        vel_y_aux = ai1y + 2*ai2y*i + 3*ai3y*(i**2)
+
+        if(vel_y_aux > vel_max): vel_y_aux = vel_max
+        #Possivel interpolacao de aceleracao
+
+        y_interp.append(y_aux)
+        vel_y_interp.append(vel_y_aux)
+
+        if(i == t1): orientation.append(atan2(y_aux-pos1[1], x_aux-pos1[0]))
+        else: orientation.append(atan2(y_aux-y_interp[-1], x_aux-x_interp[-1]))
+
+    return [x_interp, y_interp],[vel_x_interp, vel_y_interp], orientation
 
 
 ######################## MAIN ############################
@@ -414,8 +468,12 @@ while(not valid_points):
     mapa_ist = plt.imread('ist_map.png')
 
     plt.imshow(mapa_ist)
+    
     inputs = plt.ginput(2)
-
+    """
+    fig1 = plt.figure() 
+    fig1.canvas.mpl_connect('close_event', lambda _: fig1.canvas.manager.window.destroy()) #cena para fechar caso nao fuincione
+    """
     x_init = int(round(inputs[0][0]))
     y_init = int(round(inputs[0][1]))
     x_end = int(round(inputs[1][0]))
@@ -425,21 +483,25 @@ while(not valid_points):
     
     #Note: only_street_mat is transposed
     if(only_street_mat[y_init][x_init] == 1 or only_street_mat[y_end][x_end] == 1): 
-        print()
+        plt.clf()
         print("Invalid input (outside of valid street)!")
         continue
     
     nodes_graph, final_areas = add_node(x_end, y_end, nodes_graph, area_list)
     if(nodes_graph == None): 
+        plt.clf()
         print("Invalid input (outside of valid area)!")
         continue
 
     nodes_graph, aux = add_node(x_init, y_init, nodes_graph, area_list, final_areas=final_areas, xy_final=[x_end, y_end])
     if(nodes_graph == None):
         nodes_graph = []
+        plt.clf()
         print("Invalid input (outside of valid area)!")
         continue
     
     valid_points = True
 
-g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
+path = g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
+
+interpol()
