@@ -495,8 +495,8 @@ def read_small_steps_list():
 
     return [x_interp, y_interp],[vel_x_interp, vel_y_interp], orientation"""
 
-"""def generate_trajectory(path, steps_list, xy_init, xy_end):
-    trajectory = []
+def generate_trajectory(path, steps_list, xy_init, xy_end):
+    """trajectory = []
 
     steps_list = list(np.hstack((steps_list, np.zeros((len(steps_list),2)))))
 
@@ -511,9 +511,9 @@ def read_small_steps_list():
             trajectory.append(xy_end)
         else:
             for k in range(len(steps_list[path[i]][path[i+1]])):
-                trajectory.append((steps_list[path[i]][path[i+1]][k][0], steps_list[path[i]][path[i+1]][k][1]))
+                trajectory.append((steps_list[path[i]][path[i+1]][k][0], steps_list[path[i]][path[i+1]][k][1]))"""
 
-    return trajectory"""
+    return trajectory
 
 ######################## MAIN ############################
 nodes_graph = read_nodes_dist_file()
@@ -572,22 +572,28 @@ path = g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
 nodes_list.append((x_end, y_end))
 nodes_list.append((x_init, y_init))
 
+"""
+Mudar o path para adicionar o nó antes do inicial e depois do final (ver área + nó destino (o seguinte do dijkstra))
+-> descobre-se qual a aresta (eg 0->1)
 
-#Mudar o path apra incluir os novos pontos todos
-#trajectory = generate_trajectory(path, steps_list, (x_init, y_init), (x_end, y_end))
+Comparar dist do init ao proximo nó (eg 1) e do small step mais perto. se small step menor -> ir para este; else: repetir para o seguinte small step mais perto; 
+    (cont) se nenhum é mais perto -> ir direto ao 1º da aresta seguinte
+"""
+
+trajectory = generate_trajectory(path, steps_list, (x_init, y_init), (x_end, y_end))
 
 checkpoints_x = []
 checkpoints_y = []
-for i in range(len(path)):
-    checkpoints_x.append(nodes_list[path[i]][0])
-    checkpoints_y.append(nodes_list[path[i]][1])
+for i in range(len(trajectory)):
+    checkpoints_x.append(nodes_list[trajectory[i]][0])
+    checkpoints_y.append(nodes_list[trajectory[i]][1])
 
-num_pts = np.arange(len(path))
+num_pts = np.arange(len(trajectory))
 
 cs_x = CubicSpline(num_pts, checkpoints_x)
 cs_y = CubicSpline(num_pts, checkpoints_y)
 
-time = np.arange(0, len(path)-1, 0.01)
+time = np.arange(0, len(trajectory)-1, 0.01)
 
 xx = cs_x(time)
 yy = cs_y(time)
@@ -603,7 +609,7 @@ for i in range(len(xx)):
     
 
 plt.imshow(mapa_ist)
-num = int(calc_dist(nodes_graph[path[0]][0], nodes_graph[path[0]][1], nodes_graph[path[1]][0], nodes_graph[path[1]][1])/20)
+num = int(calc_dist(nodes_graph[trajectory[0]][0], nodes_graph[trajectory[0]][1], nodes_graph[trajectory[1]][0], nodes_graph[trajectory[1]][1])/20)
 
 plt.scatter(xx, yy, s = 10)
 
