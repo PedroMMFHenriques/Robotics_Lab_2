@@ -421,8 +421,33 @@ def read_area_file():
         area_list.append(row)
     return area_list
 
+
+def read_small_steps_list():
+    file = open('small_steps.csv')
+    type(file)
+
+    csvreader = csv.reader(file)
+    header = []
+    header = next(csvreader)
+
+    steps_list = []
+    for row in csvreader:
+        for i in range(len(row)):
+            
+            if(row[i] =='0'): row[i] = int(row[i])
+            else:  
+                aux = (row[i].split(";"))
+
+                for k in range(len(aux)):
+                    aux[k] = aux[k].split(" ")
+                    aux[k][0] = int(aux[k][0])
+                    aux[k][1] = int(aux[k][1])
+                row[i] = aux 
+        steps_list.append(row)
+    return steps_list
+
+
 def interpol(pos1, pos2, vel1, vel2, t1, t2, vel_max = 5.555, acc_max = 1):
-    
     tfi = t2 - t1
     #interpolacao x
     ai0x = pos1[0]
@@ -474,6 +499,7 @@ def interpol(pos1, pos2, vel1, vel2, t1, t2, vel_max = 5.555, acc_max = 1):
 nodes_graph = read_nodes_dist_file()
 area_list = read_area_file()
 nodes_list = read_nodes_list()
+steps_list = read_small_steps_list()
 
 # Driver program
 g = Graph()
@@ -488,10 +514,10 @@ while(not valid_points):
     plt.imshow(mapa_ist)
     
     inputs = plt.ginput(2)
-    """
-    fig1 = plt.figure() 
-    fig1.canvas.mpl_connect('close_event', lambda _: fig1.canvas.manager.window.destroy()) #cena para fechar caso nao fuincione
-    """
+    
+    """fig1 = plt.figure() 
+    fig1.canvas.mpl_connect('close_event', lambda _: fig1.canvas.manager.window.destroy()) #cena para fechar caso nao fuincione"""
+    
     x_init = int(round(inputs[0][0]))
     y_init = int(round(inputs[0][1]))
     x_end = int(round(inputs[1][0]))
@@ -526,6 +552,8 @@ path = g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
 nodes_list.append((x_end, y_end))
 nodes_list.append((x_init, y_init))
 
+
+#Mudar o path apra incluir os novos pontos todos
 checkpoints_x = []
 checkpoints_y = []
 for i in range(len(path)):
@@ -548,11 +576,13 @@ num = int(calc_dist(nodes_graph[path[0]][0], nodes_graph[path[0]][1], nodes_grap
 
 plt.scatter(xx, yy, s = 10)
 
+plt.savefig('trajectory.png', bbox_inches='tight')
 plt.show()
-fout = open('pontos_saida.csv', 'w', newline='')
+
+
+fout = open('trajectory_points.csv', 'w', newline='')
 writer = csv.writer(fout)
 for i in range(len(xx)):
-    writer.writerow([xx[i], yy[i]])
+    writer.writerow([int(xx[i]), int(yy[i])])
 
 fout.close()
-
