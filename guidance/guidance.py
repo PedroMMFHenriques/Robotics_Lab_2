@@ -440,14 +440,15 @@ def read_small_steps_list():
 
                 for k in range(len(aux)):
                     aux[k] = aux[k].split(" ")
-                    aux[k][0] = int(aux[k][0])
-                    aux[k][1] = int(aux[k][1])
+                    
+                    """aux[k][0] = int(aux[k][0])
+                    aux[k][1] = int(aux[k][1])"""
                 row[i] = aux 
         steps_list.append(row)
     return steps_list
 
 
-def interpol(pos1, pos2, vel1, vel2, t1, t2, vel_max = 5.555, acc_max = 1):
+"""def interpol(pos1, pos2, vel1, vel2, t1, t2, vel_max = 5.555, acc_max = 1):
     tfi = t2 - t1
     #interpolacao x
     ai0x = pos1[0]
@@ -492,8 +493,27 @@ def interpol(pos1, pos2, vel1, vel2, t1, t2, vel_max = 5.555, acc_max = 1):
         if(i == t1): orientation.append(atan2(y_aux-pos1[1], x_aux-pos1[0]))
         else: orientation.append(atan2(y_aux-y_interp[-1], x_aux-x_interp[-1]))
 
-    return [x_interp, y_interp],[vel_x_interp, vel_y_interp], orientation
+    return [x_interp, y_interp],[vel_x_interp, vel_y_interp], orientation"""
 
+"""def generate_trajectory(path, steps_list, xy_init, xy_end):
+    trajectory = []
+
+    steps_list = list(np.hstack((steps_list, np.zeros((len(steps_list),2)))))
+
+    init_node = list(np.zeros(len(steps_list[0])))
+    end_node = list(np.zeros(len(steps_list[0])))
+
+    steps_list[path[0]][path[1]]
+    steps_list[][]
+
+    for i in range(len(path)):
+        if(i == (len(path) - 1)): 
+            trajectory.append(xy_end)
+        else:
+            for k in range(len(steps_list[path[i]][path[i+1]])):
+                trajectory.append((steps_list[path[i]][path[i+1]][k][0], steps_list[path[i]][path[i+1]][k][1]))
+
+    return trajectory"""
 
 ######################## MAIN ############################
 nodes_graph = read_nodes_dist_file()
@@ -554,6 +574,8 @@ nodes_list.append((x_init, y_init))
 
 
 #Mudar o path apra incluir os novos pontos todos
+#trajectory = generate_trajectory(path, steps_list, (x_init, y_init), (x_end, y_end))
+
 checkpoints_x = []
 checkpoints_y = []
 for i in range(len(path)):
@@ -570,6 +592,15 @@ time = np.arange(0, len(path)-1, 0.01)
 xx = cs_x(time)
 yy = cs_y(time)
 
+orientation = []
+for i in range(len(xx)):
+    if(i == len(xx) - 1): 
+        theta = atan2(yy[i]-yy[i-1], xx[i]-xx[i-1])
+    else:
+        theta = atan2(yy[i+1]-yy[i], xx[i+1]-xx[i])
+
+    orientation.append(theta)
+    
 
 plt.imshow(mapa_ist)
 num = int(calc_dist(nodes_graph[path[0]][0], nodes_graph[path[0]][1], nodes_graph[path[1]][0], nodes_graph[path[1]][1])/20)
@@ -583,6 +614,9 @@ plt.show()
 fout = open('trajectory_points.csv', 'w', newline='')
 writer = csv.writer(fout)
 for i in range(len(xx)):
-    writer.writerow([int(xx[i]), int(yy[i])])
+    if(i == (len(xx)-1)):
+        writer.writerow([int(xx[i]), int(yy[i]), orientation[i], orientation[i]-orientation[i-1]])
+    else:
+        writer.writerow([int(xx[i]), int(yy[i]), orientation[i], orientation[i+1]-orientation[i]])
 
 fout.close()
