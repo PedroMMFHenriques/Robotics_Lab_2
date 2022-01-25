@@ -447,8 +447,27 @@ def read_small_steps_list():
         steps_list.append(row)
     return steps_list
 
+def trajectory_interpol(precise_path):
+    trajectory = []
+    #velocity = []
+    for i in range(len(precise_path) - 1):
+        if(i == (len(precise_path)-1)):
+            vel = (5/0.05073825503)*1000/3600
+            distance = sqrt((precise_path[i-1][0] - precise_path[i][0])**2 + (precise_path[i-1][1] - precise_path[i][1]))
+            theta = atan2(precise_path[i][1]-precise_path[i-1][1], precise_path[i][0]-precise_path[i-1][0])
+            [traject], [velocity], orientation  = interpol([precise_path[i-1][0], precise_path[i-1][1]], [precise_path[i][0], precise_path[i][1]], [vel*cos(theta), vel*sin(theta)], [vel*cos(theta), vel*sin(theta)], 1, distance/vel)
 
-"""def interpol(pos1, pos2, vel1, vel2, t1, t2, vel_max = 5.555, acc_max = 1):
+        else:
+            vel = (5/0.05073825503)*1000/3600
+            distance = sqrt((precise_path[i][0] - precise_path[i+1][0])**2 + (precise_path[i][1] - precise_path[i+1][1]))
+            theta = atan2(precise_path[i+1][1]-precise_path[i][1], precise_path[i+1][0]-precise_path[i][0])
+            [traject], [velocity], orientation  = interpol([precise_path[i][0], precise_path[i][1]], [precise_path[i+1][0], precise_path[i+1][1]], [vel*cos(theta), vel*sin(theta)], [vel*cos(theta), vel*sin(theta)], 1, distance/vel)
+        trajectory.append(traject)
+        if(i == 1):
+            print(trajectory)
+    return trajectory
+
+def interpol(pos1, pos2, vel1, vel2, t1, t2, vel_max = 5.555, acc_max = 1):
     tfi = t2 - t1
     #interpolacao x
     ai0x = pos1[0]
@@ -493,27 +512,160 @@ def read_small_steps_list():
         if(i == t1): orientation.append(atan2(y_aux-pos1[1], x_aux-pos1[0]))
         else: orientation.append(atan2(y_aux-y_interp[-1], x_aux-x_interp[-1]))
 
-    return [x_interp, y_interp],[vel_x_interp, vel_y_interp], orientation"""
+    return [x_interp, y_interp],[vel_x_interp, vel_y_interp], orientation
 
-def generate_trajectory(path, steps_list, xy_init, xy_end):
-    """trajectory = []
+def add_prev_and_next_node(path, xy_init, xy_end, area_list):
+    areas_init = check_area(xy_init[0], xy_init[0], area_list)
+    areas_end = check_area(xy_end[0], xy_end[0], area_list)
+
+    complete_path = []
+
+    for i in range(2):
+        if i == 0: areas = areas_init
+        else: areas = areas_end
+
+        if path[1] == 0 or path[-2] == 0:
+            complete_path.append(1)            
+        elif path[1] == 1 or path[-2] == 1:
+            if 'A' in areas:
+                complete_path.append(0)
+            else: 
+                complete_path.append(6)
+        elif path[1] == 2 or path[-2] == 2:
+            complete_path.append(3)
+        elif path[1] == 3 or path[-2] == 3:
+            if 'F' in areas and 'J' not in areas :
+                complete_path.append(4)
+            elif 'F' not in areas and 'J' in areas :
+                complete_path.append(8)
+            #else: intersection of areas -> just go to the next node
+        elif path[1] == 4 or path[-2] == 4:
+            if 'F' in areas:
+                complete_path.append(3)
+            else: complete_path.append(5)
+        elif path[1] == 5 or path[-2] == 5:
+            if 'G' in areas:
+                complete_path.append(4)
+            else: complete_path.append(10)
+        elif path[1] == 6 or path[-2] == 6:
+            if 'B' in areas and 'C' not in areas :
+                complete_path.append(1)
+            elif 'B' not in areas and 'C' in areas :
+                complete_path.append(7)
+            #else: intersection of areas -> just go to the next node
+        elif path[1] == 7 or path[-2] == 7:
+            if 'D' in areas and 'J' not in areas :
+                complete_path.append(2)
+            elif 'D' not in areas and 'J' in areas :
+                complete_path.append(8)
+            #else: intersection of areas -> just go to the next node
+        elif path[1] == 8 or path[-2] == 8:
+            complete_path.append(9)
+        elif path[1] == 9 or path[-2] == 9:
+            if 'K' in areas:
+                complete_path.append(7)
+            else: complete_path.append(15)
+        elif path[1] == 10 or path[-2] == 10:
+            complete_path.append(5)
+        elif path[1] == 11 or path[-2] == 11:
+            complete_path.append(6)
+        elif path[1] == 12 or path[-2] == 12:
+            complete_path.append(11)
+        elif path[1] == 13 or path[-2] == 13:
+            if 'P' in areas and 'Q' not in areas :
+                complete_path.append(12)
+            elif 'P' not in areas and 'Q' in areas :
+                complete_path.append(18)
+            #else: intersection of areas -> just go to the next node
+        elif path[1] == 14 or path[-2] == 14:
+            if 'S' in areas and 'T' not in areas :
+                complete_path.append(13)
+            elif 'S' not in areas and 'T' in areas :
+                complete_path.append(15)
+            #else: intersection of areas -> just go to the next node
+        elif path[1] == 15 or path[-2] == 15:
+            if 'V' in areas:
+                complete_path.append(20)
+            elif 'O' in areas and 'T' not in areas :
+                complete_path.append(9)
+            elif 'O' not in areas and 'T' in areas :
+                complete_path.append(14)
+            #else: intersection of areas -> just go to the next node
+        elif path[1] == 16 or path[-2] == 16:
+            complete_path.append(21)
+        elif path[1] == 17 or path[-2] == 17:
+            complete_path.append(12)
+        elif path[1] == 18 or path[-2] == 18:
+            complete_path.append(17)
+        elif path[1] == 19 or path[-2] == 19:
+            if 'U' in areas and 'X' not in areas :
+                complete_path.append(14)
+            elif 'U' not in areas and 'X' in areas :
+                complete_path.append(20)
+            #else: intersection of areas -> just go to the next node
+        elif path[1] == 20 or path[-2] == 20:
+            if 'X' in areas and 'Y' not in areas :
+                complete_path.append(19)
+            elif 'X' not in areas and 'Y' in areas :
+                complete_path.append(21)
+            #else: intersection of areas -> just go to the next node
+        elif path[1] == 21 or path[-2] == 21:
+            if 'Y' in areas:
+                complete_path.append(20)
+            else: complete_path.append(16)
+
+        complete_path.append(path)
+    return complete_path
+
+def init_to_trajectory(complete_path, nodes_list, steps_list):
+    prev_node = complete_path[0]
+    first_node = complete_path[2]
+
+    init_point = nodes_list[complete_path[1]]
+    first_node_point = nodes_list[first_node]
+
+    init_dist = calc_dist(init_point[0], init_point[1], first_node_point[0], first_node_point[1])
+
+    small_steps = steps_list[prev_node][first_node]
+
+    for step_point in small_steps:
+        step_dist = calc_dist(step_point[0], step_point[1], first_node_point[0], first_node_point[1])
+
+        if step_dist < init_dist: 
+            return init, step atual, steps seguintes
+
+
+    #return
+
+def gen_precise_path(path, steps_list, nodes_list, area_list):
+    if len(path) <= 2: return path
 
     steps_list = list(np.hstack((steps_list, np.zeros((len(steps_list),2)))))
-
     init_node = list(np.zeros(len(steps_list[0])))
     end_node = list(np.zeros(len(steps_list[0])))
+    steps_list.append(end_node)
+    steps_list.append(init_node)
 
-    steps_list[path[0]][path[1]]
-    steps_list[][]
+    xy_init = nodes_list[-1]
+    xy_end = nodes_list[-2]
+    steps_list[path[0]][path[1]] = xy_init
+    steps_list[path[-2]][path[-1]] = xy_end
 
+    print(path)
+    complete_path = add_prev_and_next_node(path, xy_init, xy_end, area_list)
+    print(complete_path)
+
+    precise_path = []
     for i in range(len(path)):
-        if(i == (len(path) - 1)): 
-            trajectory.append(xy_end)
+        if i == 0:
+            #init_to_trajectory
+        elif(i == (len(path) - 1)): 
+            precise_path.append(xy_end)
         else:
             for k in range(len(steps_list[path[i]][path[i+1]])):
-                trajectory.append((steps_list[path[i]][path[i+1]][k][0], steps_list[path[i]][path[i+1]][k][1]))"""
+                precise_path.append((steps_list[path[i]][path[i+1]][k][0], steps_list[path[i]][path[i+1]][k][1]))
 
-    return trajectory
+    return precise_path
 
 ######################## MAIN ############################
 nodes_graph = read_nodes_dist_file()
@@ -572,31 +724,29 @@ path = g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
 nodes_list.append((x_end, y_end))
 nodes_list.append((x_init, y_init))
 
-"""
-Mudar o path para adicionar o nó antes do inicial e depois do final (ver área + nó destino (o seguinte do dijkstra))
--> descobre-se qual a aresta (eg 0->1)
-
-Comparar dist do init ao proximo nó (eg 1) e do small step mais perto. se small step menor -> ir para este; else: repetir para o seguinte small step mais perto; 
-    (cont) se nenhum é mais perto -> ir direto ao 1º da aresta seguinte
-"""
-
-trajectory = generate_trajectory(path, steps_list, (x_init, y_init), (x_end, y_end))
+precise_path = path
+#precise_path = gen_precise_path(path, steps_list, nodes_list, area_list)
 
 checkpoints_x = []
 checkpoints_y = []
-for i in range(len(trajectory)):
-    checkpoints_x.append(nodes_list[trajectory[i]][0])
-    checkpoints_y.append(nodes_list[trajectory[i]][1])
+for i in range(len(precise_path)):
+    checkpoints_x.append(nodes_list[precise_path[i]][0])
+    checkpoints_y.append(nodes_list[precise_path[i]][1])
 
-num_pts = np.arange(len(trajectory))
+
+vetor_trajectories = trajectory_interpol(precise_path)
+xx = vetor_trajectories[0][:]
+yy = vetor_trajectories[1][:]
+
+"""num_pts = np.arange(len(precise_path))
 
 cs_x = CubicSpline(num_pts, checkpoints_x)
 cs_y = CubicSpline(num_pts, checkpoints_y)
 
-time = np.arange(0, len(trajectory)-1, 0.01)
+time = np.arange(0, len(precise_path)-1, 0.01)
 
 xx = cs_x(time)
-yy = cs_y(time)
+yy = cs_y(time)"""
 
 orientation = []
 for i in range(len(xx)):
@@ -609,7 +759,7 @@ for i in range(len(xx)):
     
 
 plt.imshow(mapa_ist)
-num = int(calc_dist(nodes_graph[trajectory[0]][0], nodes_graph[trajectory[0]][1], nodes_graph[trajectory[1]][0], nodes_graph[trajectory[1]][1])/20)
+num = int(calc_dist(nodes_graph[precise_path[0]][0], nodes_graph[precise_path[0]][1], nodes_graph[precise_path[1]][0], nodes_graph[precise_path[1]][1])/20)
 
 plt.scatter(xx, yy, s = 10)
 
