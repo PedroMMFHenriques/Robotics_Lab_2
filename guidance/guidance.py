@@ -440,9 +440,8 @@ def read_small_steps_list():
 
                 for k in range(len(aux)):
                     aux[k] = aux[k].split(" ")
-                    
-                    """aux[k][0] = int(aux[k][0])
-                    aux[k][1] = int(aux[k][1])"""
+                    aux[k][0] = int(aux[k][0])
+                    aux[k][1] = int(aux[k][1])
                 row[i] = aux 
         steps_list.append(row)
     return steps_list
@@ -515,8 +514,8 @@ def interpol(pos1, pos2, vel1, vel2, t1, t2, vel_max = 5.555, acc_max = 1):
     return [x_interp, y_interp],[vel_x_interp, vel_y_interp], orientation
 
 def add_prev_and_next_node(path, xy_init, xy_end, area_list):
-    areas_init = check_area(xy_init[0], xy_init[0], area_list)
-    areas_end = check_area(xy_end[0], xy_end[0], area_list)
+    areas_init = check_area(xy_init[0], xy_init[1], area_list)
+    areas_end = check_area(xy_end[0], xy_end[1], area_list)
 
     complete_path = []
 
@@ -525,65 +524,131 @@ def add_prev_and_next_node(path, xy_init, xy_end, area_list):
         else: areas = areas_end
 
         if (i == 0 and path[1] == 0) or (i == 1 and path[-2] == 0):
-            complete_path.append(1)            
+            complete_path.append(1)
+
         elif (i == 0 and path[1] == 1) or (i == 1 and path[-2] == 1):
             if 'A' in areas:
                 complete_path.append(0)
             else: 
                 complete_path.append(6)
-        elif (i == 0 and path[1] == 2) or (i == 1 and path[-2] == 2):
+
+        elif i == 0 and path[1] == 2:
             complete_path.append(3)
-        elif (i == 0 and path[1] == 3) or (i == 1 and path[-2] == 3):
-            if 'F' in areas and 'J' not in areas :
+        elif i == 1 and path[-2] == 2:
+            if 'E' in areas and 'D' not in areas :
+                complete_path.append(3)
+            elif 'E' not in areas and 'D' in areas :
+                complete_path.append(7)
+            #else: intersection of areas -> just go to the next node  
+
+        elif i == 0 and path[1] == 3:
+            if 'E' in areas and 'F' not in areas and 'I' not in areas:
+                complete_path.append(2)
+            elif 'E' not in areas and 'F' in areas and 'I' not in areas :
                 complete_path.append(4)
-            elif 'F' not in areas and 'J' in areas :
+            elif 'E' not in areas and 'F' not in areas and 'I' in areas :
                 complete_path.append(8)
             #else: intersection of areas -> just go to the next node
+        elif i == 1 and path[-2] == 3:
+            if 'E' in areas and 'F' not in areas:
+                complete_path.append(2)
+            elif 'E' not in areas and 'F' in areas:
+                complete_path.append(4)
+
         elif (i == 0 and path[1] == 4) or (i == 1 and path[-2] == 4):
             if 'F' in areas:
                 complete_path.append(3)
             else: complete_path.append(5)
+
         elif (i == 0 and path[1] == 5) or (i == 1 and path[-2] == 5):
             if 'G' in areas:
                 complete_path.append(4)
             else: complete_path.append(10)
-        elif (i == 0 and path[1] == 6) or (i == 1 and path[-2] == 6):
+
+        elif i == 0 and path[1] == 6:
+            if 'B' in areas:
+                complete_path.append(1)
+            else: complete_path.append(11)
+
+        elif i == 1 and path[-2] == 6:
             if 'B' in areas and 'C' not in areas :
                 complete_path.append(1)
             elif 'B' not in areas and 'C' in areas :
                 complete_path.append(7)
             #else: intersection of areas -> just go to the next node
-        elif (i == 0 and path[1] == 7) or (i == 1 and path[-2] == 7):
+
+        elif i == 0 and path[1] == 7:
             if 'D' in areas and 'J' not in areas :
                 complete_path.append(2)
             elif 'D' not in areas and 'J' in areas :
                 complete_path.append(8)
             #else: intersection of areas -> just go to the next node
-        elif (i == 0 and path[1] == 8) or (i == 1 and path[-2] == 8):
+        elif i == 1 and path[-2] == 7:
+            if 'C' in areas and 'K' not in areas :
+                complete_path.append(6)
+            elif 'C' not in areas and 'K' in areas :
+                complete_path.append(9)
+            #else: intersection of areas -> just go to the next node
+
+        elif i == 0 and path[1] == 8:
             complete_path.append(9)
-        elif (i == 0 and path[1] == 9) or (i == 1 and path[-2] == 9):
+        elif i == 1 and path[-2] == 8:
+            if 'I' in areas and 'J' not in areas :
+                complete_path.append(3)
+            elif 'I' not in areas and 'J' in areas :
+                complete_path.append(7)
+            #else: intersection of areas -> just go to the next node
+
+        elif i == 0 and path[1] == 9:
             if 'K' in areas:
                 complete_path.append(7)
             else: complete_path.append(15)
+        elif i == 1 and path[-2] == 9:
+            if 'L' in areas:
+                complete_path.append(8)
+            else: complete_path.append(15)
+
         elif (i == 0 and path[1] == 10) or (i == 1 and path[-2] == 10):
             complete_path.append(5)
-        elif (i == 0 and path[1] == 11) or (i == 1 and path[-2] == 11):
+
+        elif i == 0 and path[1] == 11:
             complete_path.append(6)
-        elif (i == 0 and path[1] == 12) or (i == 1 and path[-2] == 12):
+        elif i == 1 and path[-2] == 11:
+            complete_path.append(12)
+
+        elif i == 0 and path[1] == 12:
             complete_path.append(11)
-        elif (i == 0 and path[1] == 13) or (i == 1 and path[-2] == 13):
+        elif i == 1 and path[-2] == 12:
             if 'P' in areas and 'Q' not in areas :
-                complete_path.append(12)
+                complete_path.append(13)
             elif 'P' not in areas and 'Q' in areas :
+                complete_path.append(17)    
+            #else: intersection of areas -> just go to the next node
+            
+        elif (i == 0 and path[1] == 13):
+            if 'P' in areas and 'R' not in areas :
+                complete_path.append(12)
+            elif 'P' not in areas and 'R' in areas :
                 complete_path.append(18)
             #else: intersection of areas -> just go to the next node
-        elif (i == 0 and path[1] == 14) or (i == 1 and path[-2] == 14):
+        elif i == 1 and path[-2] == 13:
+            complete_path.append(14)
+            
+        elif i == 0 and path[1] == 14:
             if 'S' in areas and 'T' not in areas :
                 complete_path.append(13)
             elif 'S' not in areas and 'T' in areas :
                 complete_path.append(15)
             #else: intersection of areas -> just go to the next node
-        elif (i == 0 and path[1] == 15) or (i == 1 and path[-2] == 15):
+        elif i == 1 and path[-2] == 14:
+            if 'T' in areas and 'U' not in areas :
+                complete_path.append(15)
+            elif 'T' not in areas and 'U' in areas :
+                complete_path.append(19)
+            #else: intersection of areas -> just go to the next node
+            
+
+        elif i == 0 and path[1] == 15:
             if 'V' in areas:
                 complete_path.append(20)
             elif 'O' in areas and 'T' not in areas :
@@ -591,30 +656,57 @@ def add_prev_and_next_node(path, xy_init, xy_end, area_list):
             elif 'O' not in areas and 'T' in areas :
                 complete_path.append(14)
             #else: intersection of areas -> just go to the next node
+        elif i == 1 and path[-2] == 15:
+            if 'O' in areas and 'T' not in areas :
+                complete_path.append(9)
+            elif 'O' not in areas and 'T' in areas :
+                complete_path.append(14)
+            #else: intersection of areas -> just go to the next node
+            
+
         elif (i == 0 and path[1] == 16) or (i == 1 and path[-2] == 16):
             complete_path.append(21)
-        elif (i == 0 and path[1] == 17) or (i == 1 and path[-2] == 17):
+
+        elif i == 0 and path[1] == 17:
             complete_path.append(12)
-        elif (i == 0 and path[1] == 18) or path[-2] == 18:
+        elif i == 1 and path[-2] == 17:
+            complete_path.append(18) 
+            
+        elif i == 0 and path[1] == 18:
             complete_path.append(17)
-        elif (i == 0 and path[1] == 19) or path[-2] == 19:
+        elif i == 1 and path[-2] == 18:
+            complete_path.append(13) 
+            
+        elif i == 0 and path[1] == 19:
             if 'U' in areas and 'X' not in areas :
                 complete_path.append(14)
             elif 'U' not in areas and 'X' in areas :
                 complete_path.append(20)
             #else: intersection of areas -> just go to the next node
-        elif (i == 0 and path[1] == 20) or (i == 1 and path[-2] == 20):
+        elif i == 1 and path[-2] == 19:   
+            complete_path.append(20)
+        
+        elif i == 0 and path[1] == 20:
             if 'X' in areas and 'Y' not in areas :
                 complete_path.append(19)
             elif 'X' not in areas and 'Y' in areas :
                 complete_path.append(21)
             #else: intersection of areas -> just go to the next node
+        elif i == 1 and path[-2] == 20:
+            if 'V' in areas and 'X' not in areas and 'Y' not in areas:
+                complete_path.append(15)
+            elif 'V' not in areas and 'X' in areas and 'Y' not in areas :
+                complete_path.append(19)
+            elif 'V' not in areas and 'X' not in areas and 'Y' in areas :
+                complete_path.append(21)
+            #else: intersection of areas -> just go to the next node
+            
         elif (i == 0 and path[1] == 21) or (i == 1 and path[-2] == 21):
             if 'Y' in areas:
                 complete_path.append(20)
             else: complete_path.append(16)
 
-        if i == 0: complete_path = np.append(complete_path, path)
+        if i == 0: complete_path = list(np.append(complete_path, path))
     return complete_path
 
 def init_to_trajectory(complete_path, nodes_list, steps_list):
@@ -630,6 +722,7 @@ def init_to_trajectory(complete_path, nodes_list, steps_list):
 
     init_to_first_node = []
     init_to_first_node.append((init_point[0], init_point[1]))
+
     for step_point in small_steps:
         step_dist = calc_dist(step_point[0], step_point[1], first_node_point[0], first_node_point[1])
 
@@ -661,27 +754,29 @@ def end_from_trajectory(complete_path, nodes_list, steps_list):
 def gen_precise_path(path, steps_list, nodes_list, area_list):
     if len(path) <= 2: return path
 
-    steps_list = list(np.hstack((steps_list, np.zeros((len(steps_list),2)))))
+    """steps_list = list(np.hstack((steps_list, np.zeros((len(steps_list),2)))))
     init_node = list(np.zeros(len(steps_list[0])))
     end_node = list(np.zeros(len(steps_list[0])))
     steps_list.append(end_node)
-    steps_list.append(init_node)
+    steps_list.append(init_node)"""
 
     xy_init = nodes_list[-1]
     xy_end = nodes_list[-2]
-    steps_list[path[0]][path[1]] = xy_init
-    steps_list[path[-2]][path[-1]] = xy_end
+    """steps_list[path[0]][path[1]] = xy_init
+    steps_list[path[-2]][path[-1]] = xy_end"""
 
     print(path)
     complete_path = add_prev_and_next_node(path, xy_init, xy_end, area_list)
     print(complete_path)
 
     precise_path = []
-    for i in range(len(path)):
+    for i in range(len(path)-1):
         if i == 0:
-            precise_path.append(init_to_trajectory(complete_path, nodes_list, steps_list))
-        elif(i == (len(path) - 1)): 
-            precise_path.append(end_from_trajectory(complete_path, nodes_list, steps_list))
+            if complete_path[0] == path[0]: precise_path.append(path[0]) #if first node is the actual init node
+            else: list(np.append(precise_path,init_to_trajectory(complete_path, nodes_list, steps_list)))
+        elif(i == (len(path) - 2)): 
+            if complete_path[-1] == path[-1]: precise_path.append(path[-1]) #if last node is the actual end node
+            else: list(np.append(precise_path,end_from_trajectory(complete_path, nodes_list, steps_list)))
         else:
             for k in range(len(steps_list[path[i]][path[i+1]])):
                 precise_path.append((steps_list[path[i]][path[i+1]][k][0], steps_list[path[i]][path[i+1]][k][1]))
@@ -750,9 +845,8 @@ precise_path = gen_precise_path(path, steps_list, nodes_list, area_list)
 checkpoints_x = []
 checkpoints_y = []
 for i in range(len(precise_path)):
-    checkpoints_x.append(nodes_list[precise_path[i]][0])
-    checkpoints_y.append(nodes_list[precise_path[i]][1])
-
+    checkpoints_x.append(precise_path[i][0])
+    checkpoints_y.append(precise_path[i][1])
 
 """vetor_trajectories = trajectory_interpol(precise_path)
 xx = vetor_trajectories[0][:]
@@ -779,7 +873,7 @@ for i in range(len(xx)):
     
 
 plt.imshow(mapa_ist)
-num = int(calc_dist(nodes_graph[precise_path[0]][0], nodes_graph[precise_path[0]][1], nodes_graph[precise_path[1]][0], nodes_graph[precise_path[1]][1])/20)
+num = int(calc_dist(precise_path[0][0], precise_path[0][1], precise_path[1][0], precise_path[1][1])/20)
 
 plt.scatter(xx, yy, s = 10)
 
