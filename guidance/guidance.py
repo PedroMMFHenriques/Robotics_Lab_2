@@ -127,7 +127,7 @@ def check_area(x, y, area_list):
 
 def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
     areas = check_area(x,y,area_list)
-    if not areas: return None  #point not in an area
+    if not areas: return None, None #point not in an area
    
     #add 1 column for the new node
     node_graph = list(np.hstack((node_graph, np.zeros((len(node_graph),1)))))
@@ -502,15 +502,15 @@ def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (20/0.050
         #    orient_1 = orient_1 + (theta2-orientation[-1])
 
         if(i >= t2 ): break
-        print(theta2-orient_1)
+        #print(theta2-orient_1)
         if(vel1 > vel_max): vel1 = vel_max  
         if(vel2 > vel_max): vel2 = vel_max  
         if( (theta2-orient_1) > 3.1415/16 ):
             orient_1 = orient_1 + 3.1415/16     #varthetamax = pi/32 rads 
         if( (theta2-theta1) < -3.1415/16 ):
             orient_1 = orient_1 - 3.1415/16
-        print(theta2-orient_1)
-        print('--------------------------------')
+        #print(theta2-orient_1)
+        #print('--------------------------------')
         velocity1x = vel1*cos(orient_1)
         velocity1y = vel1*sin(orient_1)
         velocity2x = vel2*cos(theta2)
@@ -531,16 +531,11 @@ def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (20/0.050
         ai3y = -(2/tfi**3)*(pos2[1] - pos1[1]) + (1/tfi**2)*(velocity2y - velocity1y)
 
 
-
-    
-
-
         x_aux = ai0x + ai1x*i + ai2x*(i**2) + ai3x*(i**3)
         vel_x_aux = ai1x + 2*ai2x*i + 3*ai3x*(i**2)
         
         
         #Possivel interpolacao de aceleracao
-
         x_interp.append(x_aux)
         vel_x_interp.append(vel_x_aux)
         
@@ -685,13 +680,13 @@ def add_prev_and_next_node(path, xy_init, xy_end, area_list):
         elif i == 0 and path[1] == 6:
             if 'B' in areas:
                 complete_path.append(1)
-            else: complete_path.append(11)
+            else: complete_path.append(7)
 
         elif i == 1 and path[-2] == 6:
-            if 'B' in areas and 'C' not in areas :
+            if 'B' in areas and 'M' not in areas :
                 complete_path.append(1)
-            elif 'B' not in areas and 'C' in areas :
-                complete_path.append(7)
+            elif 'B' not in areas and 'M' in areas :
+                complete_path.append(11)
             #else: intersection of areas -> just go to the next node
 
         elif i == 0 and path[1] == 7:
@@ -766,12 +761,12 @@ def add_prev_and_next_node(path, xy_init, xy_end, area_list):
             
 
         elif i == 0 and path[1] == 15:
-            if 'V' in areas:
-                complete_path.append(20)
-            elif 'O' in areas and 'T' not in areas :
+            if 'O' in areas and 'T' not in areas and 'V' not in areas:
                 complete_path.append(9)
-            elif 'O' not in areas and 'T' in areas :
+            elif 'O' not in areas and 'T' in areas and 'V' not in areas:
                 complete_path.append(14)
+            elif 'O' not in areas and 'T' not in areas and 'V' in areas:
+                complete_path.append(20)
             #else: intersection of areas -> just go to the next node
         elif i == 1 and path[-2] == 15:
             if 'O' in areas and 'T' not in areas :
@@ -839,7 +834,10 @@ def init_to_trajectory(complete_path, nodes_list, steps_list):
 
     init_to_first_node = []
     init_to_first_node.append([init_point[0], init_point[1]])
-
+    """print(complete_path)
+    print(prev_node)
+    print(first_node)
+    print(small_steps)"""
     for step_point in small_steps:
         step_dist = calc_dist(step_point[0], step_point[1], first_node_point[0], first_node_point[1])
 
@@ -869,18 +867,10 @@ def end_from_trajectory(complete_path, nodes_list, steps_list):
     return end_from_last_node
 
 def gen_precise_path(path, steps_list, nodes_list, area_list):
-    if len(path) <= 2: return path
-
-    """steps_list = list(np.hstack((steps_list, np.zeros((len(steps_list),2)))))
-    init_node = list(np.zeros(len(steps_list[0])))
-    end_node = list(np.zeros(len(steps_list[0])))
-    steps_list.append(end_node)
-    steps_list.append(init_node)"""
-
     xy_init = nodes_list[-1]
     xy_end = nodes_list[-2]
-    """steps_list[path[0]][path[1]] = xy_init
-    steps_list[path[-2]][path[-1]] = xy_end"""
+
+    if len(path) <= 2: return [list(xy_init), list(xy_end)]
 
     #print(path)
     complete_path = add_prev_and_next_node(path, xy_init, xy_end, area_list)
@@ -889,13 +879,14 @@ def gen_precise_path(path, steps_list, nodes_list, area_list):
     precise_path = []
     for i in range(len(path)-1):
         if i == 0:
-            if complete_path[0] == path[0]: precise_path.append(path[0]) #if first node is the actual init node
+            if complete_path[0] == path[0]: precise_path.append(list(xy_init)) #if first node is the actual init node
             else: 
                 first_nodes = init_to_trajectory(complete_path, nodes_list, steps_list)
                 for node in first_nodes:
                     precise_path.append(node)
         elif(i == (len(path) - 2)): 
-            if complete_path[-1] == path[-1]: precise_path.append(path[-1]) #if last node is the actual end node
+            print(complete_path)
+            if complete_path[-1] == path[-1]: precise_path.append(list(xy_end)) #if last node is the actual end node
             else: 
                 last_nodes = end_from_trajectory(complete_path, nodes_list, steps_list)
                 for node in last_nodes:
