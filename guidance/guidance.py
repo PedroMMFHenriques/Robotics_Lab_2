@@ -450,7 +450,8 @@ def trajectory_interpol(precise_path, nodes_list):
 
     trajectory_x = []
     trajectory_y = []
-    velocity_list = []
+    velocity_list_x = []
+    velocity_list_y = []
     orientation_list = []
 
     #velocity = []
@@ -467,13 +468,13 @@ def trajectory_interpol(precise_path, nodes_list):
                 #distance = sqrt((precise_path[i-1][0] - precise_path[i][0])**2 + (precise_path[i-1][1] - precise_path[i][1])**2)
                 theta1 = atan2(precise_path[i][1]-precise_path[i-1][1], precise_path[i][0]-precise_path[i-1][0])
                 theta2 = theta1
-                traject, velocity, orientation  = interpol([trajectory_x[-1][-1], trajectory_y[-1][-1]], [precise_path[i+1][0], precise_path[i+1][1]], velocity[-1][0], velocity[-1][1], theta1, -theta2 , 0, 1)  
+                traject, velocity, orientation  = interpol([trajectory_x[-1][-1], trajectory_y[-1][-1]], [precise_path[i+1][0], precise_path[i+1][1]], [velocity_list_x[-1][-1], velocity_list_y[-1][-1]] , [0, 0], theta1, -theta2 , 0, 1)  
             elif(i == 0):
-                vel = 0
+                vel = (5/0.05073825503)*1000/3600
                 #distance = sqrt((precise_path[i][0] - precise_path[i+1][0])**2 + (precise_path[i][1] - precise_path[i+1][1])**2)
                 theta1 = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])
                 theta2 = atan2(precise_path[2][1]-precise_path[1][1], precise_path[2][0]-precise_path[1][0])
-                traject, velocity, orientation  = interpol([precise_path[i][0], precise_path[i][1]], [precise_path[i+1][0], precise_path[i+1][1]], vel, vel, theta1, -theta2 , 0, 1)  
+                traject, velocity, orientation  = interpol([precise_path[i][0], precise_path[i][1]], [precise_path[i+1][0], precise_path[i+1][1]], [0, 0], [vel*cos(theta2), vel*sin(theta2)], theta1, -theta2 , 0, 1)  
             else:
                 vel = (5/0.05073825503)*1000/3600
                 #distance = sqrt((precise_path[i][0] - precise_path[i+1][0])**2 + (precise_path[i][1] - precise_path[i+1][1])**2)
@@ -481,16 +482,17 @@ def trajectory_interpol(precise_path, nodes_list):
                 
                 theta1 = orientation_list[-1][-1]
                 theta2 = atan2(precise_path[i+1][1]-precise_path[i][1], precise_path[i+1][0]-precise_path[i][0])
-                traject, velocity, orientation  = interpol([trajectory_x[-1][-1], trajectory_y[-1][-1]], [precise_path[i+1][0], precise_path[i+1][1]], velocity[-1][0], velocity[-1][1], theta1, -theta2 , 0, 1)  
+                traject, velocity, orientation  = interpol([trajectory_x[-1][-1], trajectory_y[-1][-1]], [precise_path[i+1][0], precise_path[i+1][1]], [velocity_list_x[-1][-1], velocity_list_y[-1][-1]], [vel*cos(theta2), vel*sin(theta2)], theta1, -theta2 , 0, 1)  
     
             trajectory_x.append(traject[:][0])
             trajectory_y.append(traject[:][1])
-            velocity_list.append(velocity)
+            velocity_list_x.append(velocity[:][0])
+            velocity_list_y.append(velocity[:][1])
             orientation_list.append(orientation)
 
     return [trajectory_x,trajectory_y]
 
-def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (20/0.05073825503)*1000/3600): 
+def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (10/0.05073825503)*1000/3600): 
     tfi = t2 - t1
     time_div = (t2-t1)/20
     x_interp = []
@@ -499,30 +501,42 @@ def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (20/0.050
     vel_y_interp = []
     orientation = []
     orient_1 = theta1
-
-    if(vel1 > vel_max): vel1 = vel_max  
-    if(vel2 > vel_max): vel2 = vel_max  
+    
+    if(vel1[0] > vel_max): vel1[0] = vel_max
+    elif(vel1[0] < -vel_max): vel1[0] = -vel_max
+    if(vel2[0] > vel_max): vel2[0] = vel_max
+    elif(vel2[0] < -vel_max): vel2[0] = -vel_max
+    if(vel1[1] > vel_max): vel1[1] = vel_max  
+    elif(vel1[1] < -vel_max): vel1[1] = -vel_max
+    if(vel2[1] > vel_max): vel2[1] = vel_max 
+    elif(vel2[1] < -vel_max): vel2[1] = -vel_max
+    print(vel1[0]*0.05073825503*3.6)
+    print(vel1[1]*0.05073825503*3.6)
     if( (theta2-orient_1) > 3.1415/16 ):
         orient_1 = orient_1 + 3.1415/16     #varthetamax = pi/32 rads 
     if( (theta2-theta1) < -3.1415/16 ):
         orient_1 = orient_1 - 3.1415/16
     #print(theta2-orient_1)
     #print('--------------------------------')
-    velocity1x = vel1*cos(orient_1)
+    """velocity1x = vel1*cos(orient_1)
     velocity1y = vel1*sin(orient_1)
     velocity2x = vel2*cos(theta2)
-    velocity2y = vel2*sin(theta2)
+    velocity2y = vel2*sin(theta2)"""
     #interpolacao x
+    velocity1x = vel1[0]
+    velocity2x = vel2[0]
     ai0x = pos1[0]
     ai1x = velocity1x
     ai2x = (3/tfi**2)*(pos2[0] - pos1[0]) - (2/tfi)*velocity1x - (1/tfi)*velocity2x
-    ai3x = -(2/tfi**3)*(pos2[0] - pos1[0]) + (1/tfi**2)*(velocity2x - velocity1x)
+    ai3x = -(2/tfi**3)*(pos2[0] - pos1[0]) + (1/tfi**2)*(velocity2x + velocity1x)
     
-    #interpolacao y 
+    #interpolacao y
+    velocity1y = vel1[1]
+    velocity2y = vel2[1]
     ai0y = pos1[1]
     ai1y = velocity1y
     ai2y = (3/tfi**2)*(pos2[1] - pos1[1]) - (2/tfi)*velocity1y - (1/tfi)*velocity2y
-    ai3y = -(2/tfi**3)*(pos2[1] - pos1[1]) + (1/tfi**2)*(velocity2y - velocity1y)
+    ai3y = -(2/tfi**3)*(pos2[1] - pos1[1]) + (1/tfi**2)*(velocity2y + velocity1y)
 
     for i in np.arange(t1, t2+time_div, time_div):
         #if(i > t1+time_div):
