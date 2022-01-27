@@ -1,9 +1,9 @@
 import csv
 import numpy as np
-from collections import defaultdict
 import matplotlib.pyplot as plt
 from math import *
 from scipy.interpolate import *
+from csaps import csaps
 
 class Graph:
  
@@ -453,37 +453,40 @@ def trajectory_interpol(precise_path, nodes_list):
     velocity_list = []
     orientation_list = []
 
-    #for k in range(len(precise_path_2)):
-    #    aux=nodes_list[precise_path_2[k]]
-    #    precise_path.append(aux)
-    
-
     #velocity = []
-    for i in range(len(precise_path) - 1):
-        if(i == (len(precise_path)-1)):
-            vel = (5/0.05073825503)*1000/3600
-            distance = sqrt((precise_path[i-1][0] - precise_path[i][0])**2 + (precise_path[i-1][1] - precise_path[i][1])**2)
-            theta1 = atan2(precise_path[i][1]-precise_path[i-1][1], precise_path[i][0]-precise_path[i-1][0])
-            theta2 = theta1
-            traject, velocity, orientation  = interpol([precise_path[i-1][0], precise_path[i-1][1]], [precise_path[i][0], precise_path[i][1]], vel, vel, theta1, -theta2 , 0, 1)  
-        elif(i == 0):
-            vel = (5/0.05073825503)*1000/3600
-            distance = sqrt((precise_path[i][0] - precise_path[i+1][0])**2 + (precise_path[i][1] - precise_path[i+1][1])**2)
-            theta1 = 1.57
-            theta2 = atan2(precise_path[i+1][1]-precise_path[i][1], precise_path[i+1][0]-precise_path[i][0])
-            traject, velocity, orientation  = interpol([precise_path[i][0], precise_path[i][1]], [precise_path[i+1][0], precise_path[i+1][1]], vel, vel, theta1, -theta2 , 0, 1)  
-        else:
-            vel = (5/0.05073825503)*1000/3600
-            distance = sqrt((precise_path[i][0] - precise_path[i+1][0])**2 + (precise_path[i][1] - precise_path[i+1][1])**2)
-            #theta1 = atan2(precise_path[i][1]-precise_path[i-1][1], precise_path[i][0]-precise_path[i-1][0])
-            
-            theta1 = orientation_list[-1][-1]
-            theta2 = atan2(precise_path[i+1][1]-precise_path[i][1], precise_path[i+1][0]-precise_path[i][0])
-            traject, velocity, orientation  = interpol([trajectory_x[-1][-1], trajectory_y[-1][-1]], [precise_path[i+1][0], precise_path[i+1][1]], vel, vel, theta1, -theta2 , 0, 1)  
+    if(len(precise_path) <= 2):
+        theta = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])
+        traject, velocity, orientation  = interpol([precise_path[0][0], precise_path[0][1]], [precise_path[1][0], precise_path[0][1]], 0, 0, theta, theta, 0, 1)
         trajectory_x.append(traject[:][0])
-        trajectory_y.append(traject[:][1])
-        velocity_list.append(velocity)
-        orientation_list.append(orientation)
+        trajectory_y.append(traject[:][1]) 
+        
+    else:
+        for i in range(len(precise_path) - 1):
+            if(i == (len(precise_path)-2)):
+                vel = 0
+                #distance = sqrt((precise_path[i-1][0] - precise_path[i][0])**2 + (precise_path[i-1][1] - precise_path[i][1])**2)
+                theta1 = atan2(precise_path[i][1]-precise_path[i-1][1], precise_path[i][0]-precise_path[i-1][0])
+                theta2 = theta1
+                traject, velocity, orientation  = interpol([trajectory_x[-1][-1], trajectory_y[-1][-1]], [precise_path[i+1][0], precise_path[i+1][1]], velocity[-1][0], velocity[-1][1], theta1, -theta2 , 0, 1)  
+            elif(i == 0):
+                vel = 0
+                #distance = sqrt((precise_path[i][0] - precise_path[i+1][0])**2 + (precise_path[i][1] - precise_path[i+1][1])**2)
+                theta1 = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])
+                theta2 = atan2(precise_path[2][1]-precise_path[1][1], precise_path[2][0]-precise_path[1][0])
+                traject, velocity, orientation  = interpol([precise_path[i][0], precise_path[i][1]], [precise_path[i+1][0], precise_path[i+1][1]], vel, vel, theta1, -theta2 , 0, 1)  
+            else:
+                vel = (5/0.05073825503)*1000/3600
+                #distance = sqrt((precise_path[i][0] - precise_path[i+1][0])**2 + (precise_path[i][1] - precise_path[i+1][1])**2)
+                #theta1 = atan2(precise_path[i][1]-precise_path[i-1][1], precise_path[i][0]-precise_path[i-1][0])
+                
+                theta1 = orientation_list[-1][-1]
+                theta2 = atan2(precise_path[i+1][1]-precise_path[i][1], precise_path[i+1][0]-precise_path[i][0])
+                traject, velocity, orientation  = interpol([trajectory_x[-1][-1], trajectory_y[-1][-1]], [precise_path[i+1][0], precise_path[i+1][1]], velocity[-1][0], velocity[-1][1], theta1, -theta2 , 0, 1)  
+    
+            trajectory_x.append(traject[:][0])
+            trajectory_y.append(traject[:][1])
+            velocity_list.append(velocity)
+            orientation_list.append(orientation)
 
     return [trajectory_x,trajectory_y]
 
@@ -497,57 +500,47 @@ def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (20/0.050
     orientation = []
     orient_1 = theta1
 
+    if(vel1 > vel_max): vel1 = vel_max  
+    if(vel2 > vel_max): vel2 = vel_max  
+    if( (theta2-orient_1) > 3.1415/16 ):
+        orient_1 = orient_1 + 3.1415/16     #varthetamax = pi/32 rads 
+    if( (theta2-theta1) < -3.1415/16 ):
+        orient_1 = orient_1 - 3.1415/16
+    #print(theta2-orient_1)
+    #print('--------------------------------')
+    velocity1x = vel1*cos(orient_1)
+    velocity1y = vel1*sin(orient_1)
+    velocity2x = vel2*cos(theta2)
+    velocity2y = vel2*sin(theta2)
+    #interpolacao x
+    ai0x = pos1[0]
+    ai1x = velocity1x
+    ai2x = (3/tfi**2)*(pos2[0] - pos1[0]) - (2/tfi)*velocity1x - (1/tfi)*velocity2x
+    ai3x = -(2/tfi**3)*(pos2[0] - pos1[0]) + (1/tfi**2)*(velocity2x - velocity1x)
+    
+    #interpolacao y 
+    ai0y = pos1[1]
+    ai1y = velocity1y
+    ai2y = (3/tfi**2)*(pos2[1] - pos1[1]) - (2/tfi)*velocity1y - (1/tfi)*velocity2y
+    ai3y = -(2/tfi**3)*(pos2[1] - pos1[1]) + (1/tfi**2)*(velocity2y - velocity1y)
+
     for i in np.arange(t1, t2+time_div, time_div):
         #if(i > t1+time_div):
         #    orient_1 = orient_1 + (theta2-orientation[-1])
 
-        if(i >= t2 ): break
+        if(i >= t2): break
         #print(theta2-orient_1)
-        if(vel1 > vel_max): vel1 = vel_max  
-        if(vel2 > vel_max): vel2 = vel_max  
-        if( (theta2-orient_1) > 3.1415/16 ):
-            orient_1 = orient_1 + 3.1415/16     #varthetamax = pi/32 rads 
-        if( (theta2-theta1) < -3.1415/16 ):
-            orient_1 = orient_1 - 3.1415/16
-        #print(theta2-orient_1)
-        #print('--------------------------------')
-        velocity1x = vel1*cos(orient_1)
-        velocity1y = vel1*sin(orient_1)
-        velocity2x = vel2*cos(theta2)
-        velocity2y = vel2*sin(theta2)
-        #interpolacao x
-        ai0x = pos1[0]
-        ai1x = velocity1x
-
-        ai2x = (3/tfi**2)*(pos2[0] - pos1[0]) - (2/tfi)*velocity1x - (1/tfi)*velocity2x
-        ai3x = -(2/tfi**3)*(pos2[0] - pos1[0]) + (1/tfi**2)*(velocity2x - velocity1x)
-        
-        #interpolacao y 
-        ai0y = pos1[1]
-        ai1y = velocity1y
-        
-
-        ai2y = (3/tfi**2)*(pos2[1] - pos1[1]) - (2/tfi)*velocity1y - (1/tfi)*velocity2y
-        ai3y = -(2/tfi**3)*(pos2[1] - pos1[1]) + (1/tfi**2)*(velocity2y - velocity1y)
-
 
         x_aux = ai0x + ai1x*i + ai2x*(i**2) + ai3x*(i**3)
-        vel_x_aux = ai1x + 2*ai2x*i + 3*ai3x*(i**2)
-        
-        
-        #Possivel interpolacao de aceleracao
+        vel_x_aux = ai1x + 2*ai2x*i + 3*ai3x*(i**2)  
         x_interp.append(x_aux)
         vel_x_interp.append(vel_x_aux)
         
-        ############################################
         y_aux = ai0y + ai1y*i + ai2y*(i**2) + ai3y*(i**3)
         vel_y_aux = ai1y + 2*ai2y*i + 3*ai3y*(i**2)
-
-        
-        #Possivel interpolacao de aceleracao
-
         y_interp.append(y_aux)
         vel_y_interp.append(vel_y_aux)
+
         if(i <= t1+time_div): 
             orientation.append(atan2(y_aux-pos1[1], x_aux-pos1[0]))
         else: 
@@ -975,8 +968,8 @@ for i in range(len(precise_path)):
 
 num_pts = np.arange(len(precise_path))
 
-cs_x = CubicSpline(num_pts, checkpoints_x)
-cs_y = CubicSpline(num_pts, checkpoints_y)
+cs_x = csaps(num_pts, checkpoints_x, 0.85)
+cs_y = csaps(num_pts, checkpoints_y, 0.85)
 
 time = np.arange(0, len(precise_path)-1, 0.01)
 
@@ -998,7 +991,7 @@ num = int(calc_dist(precise_path[0][0], precise_path[0][1], precise_path[1][0], 
 
 plt.scatter(xx, yy, s = 10)
 
-plt.savefig('trajectory.png', bbox_inches='tight')
+plt.savefig('trajectory.pdf', bbox_inches='tight')
 plt.show()
 
 
@@ -1006,8 +999,8 @@ fout = open('trajectory_points.csv', 'w', newline='')
 writer = csv.writer(fout)
 for i in range(len(xx)):
     if(i == (len(xx)-1)):
-        writer.writerow([int(xx[i]), int(yy[i]), orientation[i], orientation[i]-orientation[i-1]])
+        writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
     else:
-        writer.writerow([int(xx[i]), int(yy[i]), orientation[i], orientation[i+1]-orientation[i]])
+        writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
 
 fout.close()
