@@ -1,9 +1,10 @@
+import matplotlib
+matplotlib.use('Qt5Agg')
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from math import *
 from scipy.interpolate import *
-from csaps import csaps
 
 class Graph:
  
@@ -373,6 +374,7 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
 
 
 def read_nodes_dist_file():
+    #file1 = open('resources/path_nodes_dist.csv')
     file1 = open('path_nodes_dist.csv')
     type(file1)
 
@@ -390,6 +392,7 @@ def read_nodes_dist_file():
 
 def read_nodes_list():
     file = open('path_nodes_positions.csv')
+    #file = open('resources/path_nodes_positions.csv')
     type(file)
 
     csvreader = csv.reader(file)
@@ -406,7 +409,8 @@ def read_nodes_list():
 
 
 def read_area_file():
-    file = open('rectangles_position.csv')
+    #file = open("resources/rectangles_position.csv")
+    file = open("rectangles_position.csv")
     type(file)
 
     csvreader = csv.reader(file)
@@ -423,7 +427,8 @@ def read_area_file():
 
 
 def read_small_steps_list():
-    file = open('small_steps.csv')
+    file = open('small_steps.csv')  
+    #file = open('resources/small_steps.csv')
     type(file)
 
     csvreader = csv.reader(file)
@@ -453,7 +458,6 @@ def trajectory_interpol(precise_path, nodes_list):
     velocity_list_y = []
     orientation_list = []
 
-    #velocity = []
     if(len(precise_path) <= 2):
         theta = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])
         traject, velocity, orientation  = interpol([precise_path[0][0], precise_path[0][1]], [precise_path[1][0], precise_path[1][1]], [0, 0], [0, 0], theta, theta, 0, 1)
@@ -464,24 +468,22 @@ def trajectory_interpol(precise_path, nodes_list):
         for i in range(len(precise_path) - 1):
             if(i == (len(precise_path)-2)):
                 vel = 0
-                #distance = sqrt((precise_path[i-1][0] - precise_path[i][0])**2 + (precise_path[i-1][1] - precise_path[i][1])**2)
+
                 theta1 = atan2(precise_path[i][1]-precise_path[i-1][1], precise_path[i][0]-precise_path[i-1][0])
                 theta2 = theta1
-                traject, velocity, orientation  = interpol([trajectory_x[-1][-1], trajectory_y[-1][-1]], [precise_path[i+1][0], precise_path[i+1][1]], [velocity_list_x[-1][-1], velocity_list_y[-1][-1]] , [0, 0], theta1, -theta2 , 0, 1)  
+                traject, velocity, orientation  = interpol([trajectory_x[-1][-1], trajectory_y[-1][-1]], [precise_path[i+1][0], precise_path[i+1][1]], [velocity_list_x[-1][-1], velocity_list_y[-1][-1]] , [0, 0], theta1, theta2 , 0, 1)  
             elif(i == 0):
                 vel = (5/0.05073825503)*1000/3600
-                #distance = sqrt((precise_path[i][0] - precise_path[i+1][0])**2 + (precise_path[i][1] - precise_path[i+1][1])**2)
+
                 theta1 = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])
                 theta2 = atan2(precise_path[2][1]-precise_path[1][1], precise_path[2][0]-precise_path[1][0])
-                traject, velocity, orientation  = interpol([precise_path[i][0], precise_path[i][1]], [precise_path[i+1][0], precise_path[i+1][1]], [0, 0], [vel*cos(theta2), vel*sin(theta2)], theta1, -theta2 , 0, 1)  
+                traject, velocity, orientation  = interpol([precise_path[i][0], precise_path[i][1]], [precise_path[i+1][0], precise_path[i+1][1]], [0, 0], [vel*cos(theta2), vel*sin(theta2)], theta1, theta2 , 0, 1)  
             else:
                 vel = (5/0.05073825503)*1000/3600
-                #distance = sqrt((precise_path[i][0] - precise_path[i+1][0])**2 + (precise_path[i][1] - precise_path[i+1][1])**2)
-                #theta1 = atan2(precise_path[i][1]-precise_path[i-1][1], precise_path[i][0]-precise_path[i-1][0])
                 
                 theta1 = orientation_list[-1][-1]
                 theta2 = atan2(precise_path[i+1][1]-precise_path[i][1], precise_path[i+1][0]-precise_path[i][0])
-                traject, velocity, orientation  = interpol([trajectory_x[-1][-1], trajectory_y[-1][-1]], [precise_path[i+1][0], precise_path[i+1][1]], [velocity_list_x[-1][-1], velocity_list_y[-1][-1]], [vel*cos(theta2), vel*sin(theta2)], theta1, -theta2 , 0, 1)  
+                traject, velocity, orientation  = interpol([trajectory_x[-1][-1], trajectory_y[-1][-1]], [precise_path[i+1][0], precise_path[i+1][1]], [velocity_list_x[-1][-1], velocity_list_y[-1][-1]], [vel*cos(theta2), vel*sin(theta2)], theta1, theta2 , 0, 1)  
     
             trajectory_x.append(traject[:][0])
             trajectory_y.append(traject[:][1])
@@ -514,13 +516,8 @@ def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (10/0.050
         orient_1 = orient_1 + 3.1415/16     #varthetamax = pi/32 rads 
     if( (theta2-theta1) < -3.1415/16 ):
         orient_1 = orient_1 - 3.1415/16
-    #print(theta2-orient_1)
-    #print('--------------------------------')
-    """velocity1x = vel1*cos(orient_1)
-    velocity1y = vel1*sin(orient_1)
-    velocity2x = vel2*cos(theta2)
-    velocity2y = vel2*sin(theta2)"""
-    #interpolacao x
+
+    #x interpolation
     velocity1x = vel1[0]
     velocity2x = vel2[0]
     ai0x = pos1[0]
@@ -528,7 +525,7 @@ def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (10/0.050
     ai2x = (3/tfi**2)*(pos2[0] - pos1[0]) - (2/tfi)*velocity1x - (1/tfi)*velocity2x
     ai3x = -(2/tfi**3)*(pos2[0] - pos1[0]) + (1/tfi**2)*(velocity2x + velocity1x)
     
-    #interpolacao y
+    #y interpolation
     velocity1y = vel1[1]
     velocity2y = vel2[1]
     ai0y = pos1[1]
@@ -537,11 +534,8 @@ def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (10/0.050
     ai3y = -(2/tfi**3)*(pos2[1] - pos1[1]) + (1/tfi**2)*(velocity2y + velocity1y)
 
     for i in np.arange(t1, t2+time_div, time_div):
-        #if(i > t1+time_div):
-        #    orient_1 = orient_1 + (theta2-orientation[-1])
 
         if(i >= t2): break
-        #print(theta2-orient_1)
 
         x_aux = ai0x + ai1x*i + ai2x*(i**2) + ai3x*(i**3)
         vel_x_aux = ai1x + 2*ai2x*i + 3*ai3x*(i**2)  
@@ -560,75 +554,6 @@ def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (10/0.050
 
     return [x_interp, y_interp], [vel_x_interp, vel_y_interp], orientation
     
-
-    
-"""def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (20/0.05073825503)*1000/3600): 
-    tfi = t2 - t1
-
-    print(theta2-theta1)
-    if(vel1 > vel_max): vel1 = vel_max  
-    if(vel2 > vel_max): vel2 = vel_max  
-    if( (theta2-theta1) > 3.1415/16 ):
-        theta2 = theta1 + 3.1415/16     #varthetamax = pi/32 rads 
-    if( (theta2-theta1) < -3.1415/16 ):
-        theta2 = theta1 - 3.1415/16
-    print(theta2-theta1)
-    print('--------------------------------')
-    velocity1x = vel1*cos(theta1)
-    velocity1y = vel1*sin(theta1)
-    velocity2x = vel2*cos(theta2)
-    velocity2y = vel2*sin(theta2)
-    #interpolacao x
-    ai0x = pos1[0]
-    ai1x = velocity1x
-
-    ai2x = (3/tfi**2)*(pos2[0] - pos1[0]) - (2/tfi)*velocity1x - (1/tfi)*velocity2x
-    ai3x = -(2/tfi**3)*(pos2[0] - pos1[0]) + (1/tfi**2)*(velocity2x - velocity1x)
-    
-    #interpolacao y 
-    ai0y = pos1[1]
-    ai1y = velocity1y
-      
-
-    ai2y = (3/tfi**2)*(pos2[1] - pos1[1]) - (2/tfi)*velocity1y - (1/tfi)*velocity2y
-    ai3y = -(2/tfi**3)*(pos2[1] - pos1[1]) + (1/tfi**2)*(velocity2y - velocity1y)
-
-
-    x_interp = []
-    vel_x_interp = []
-    y_interp = []
-    vel_y_interp = []
-    orientation = []
-    
-    time_div = (t2-t1)/20
-    for i in np.arange(t1+time_div, t2-time_div, time_div):
-
-        #if(i >= t2 ): break
-
-        x_aux = ai0x + ai1x*i + ai2x*(i**2) + ai3x*(i**3)
-        vel_x_aux = ai1x + 2*ai2x*i + 3*ai3x*(i**2)
-        
-        
-        #Possivel interpolacao de aceleracao
-
-        x_interp.append(x_aux)
-        vel_x_interp.append(vel_x_aux)
-        
-        ############################################
-        y_aux = ai0y + ai1y*i + ai2y*(i**2) + ai3y*(i**3)
-        vel_y_aux = ai1y + 2*ai2y*i + 3*ai3y*(i**2)
-
-        
-        #Possivel interpolacao de aceleracao
-
-        y_interp.append(y_aux)
-        vel_y_interp.append(vel_y_aux)
-        if(i <= t1+time_div): 
-            orientation.append(atan2(y_aux-pos1[1], x_aux-pos1[0]))
-        else: 
-            orientation.append(atan2(y_aux-y_interp[-2], x_aux-x_interp[-2]))
-
-    return [x_interp, y_interp], [vel_x_interp, vel_y_interp], orientation"""
 
 def add_prev_and_next_node(path, xy_init, xy_end, area_list):
     areas_init = check_area(xy_init[0], xy_init[1], area_list)
@@ -686,7 +611,6 @@ def add_prev_and_next_node(path, xy_init, xy_end, area_list):
             if 'B' in areas:
                 complete_path.append(1)
             else: complete_path.append(7)
-
         elif i == 1 and path[-2] == 6:
             if 'B' in areas and 'M' not in areas :
                 complete_path.append(1)
@@ -839,10 +763,7 @@ def init_to_trajectory(complete_path, nodes_list, steps_list):
 
     init_to_first_node = []
     init_to_first_node.append([init_point[0], init_point[1]])
-    """print(complete_path)
-    print(prev_node)
-    print(first_node)
-    print(small_steps)"""
+
     for step_point in small_steps:
         step_dist = calc_dist(step_point[0], step_point[1], first_node_point[0], first_node_point[1])
 
@@ -877,9 +798,7 @@ def gen_precise_path(path, steps_list, nodes_list, area_list):
 
     if len(path) <= 2: return [list(xy_init), list(xy_end)]
 
-    #print(path)
     complete_path = add_prev_and_next_node(path, xy_init, xy_end, area_list)
-    #print(complete_path)
 
     precise_path = []
     for i in range(len(path)-1):
@@ -901,6 +820,7 @@ def gen_precise_path(path, steps_list, nodes_list, area_list):
                 precise_path.append([steps_list[path[i]][path[i+1]][k][0], steps_list[path[i]][path[i+1]][k][1]])
     return precise_path
 
+
 ######################## MAIN ############################
 nodes_graph = read_nodes_dist_file()
 area_list = read_area_file()
@@ -915,12 +835,15 @@ n_nodes = len(nodes_graph)
 valid_points = False
 
 while(not valid_points):
+    #mapa_ist = plt.imread('resources/ist_map.png')
     mapa_ist = plt.imread('ist_map.png')
+    manager = plt.get_current_fig_manager()
+    manager.window.showMaximized()
 
     plt.imshow(mapa_ist)
     
     inputs = plt.ginput(2)
-    
+
     """fig1 = plt.figure() 
     fig1.canvas.mpl_connect('close_event', lambda _: fig1.canvas.manager.window.destroy()) #cena para fechar caso nao fuincione"""
     
@@ -929,8 +852,12 @@ while(not valid_points):
     x_end = int(round(inputs[1][0]))
     y_end = int(round(inputs[1][1]))
 
+    plt.scatter([x_init, x_end], [y_init, y_end], c = "r", marker = "+")
+    plt.savefig('chosen_points.pdf', bbox_inches='tight')
+
+    #only_street_mat = plt.imread("resources/ist_only_streets.png")
     only_street_mat = plt.imread("ist_only_streets.png")
-    
+
     #Note: only_street_mat is transposed
     if(only_street_mat[y_init][x_init] == 1 or only_street_mat[y_end][x_end] == 1): 
         plt.clf()
@@ -971,22 +898,6 @@ for i in vetor_trajectories[0][:]:
 for i in vetor_trajectories[1][:]:
     for j in i:
         yy.append(int(j))
-
-"""checkpoints_x = []
-checkpoints_y = []
-for i in range(len(precise_path)):
-    checkpoints_x.append(precise_path[i][0])
-    checkpoints_y.append(precise_path[i][1])
-
-num_pts = np.arange(len(precise_path))
-
-cs_x = csaps(num_pts, checkpoints_x, 0.85)
-cs_y = csaps(num_pts, checkpoints_y, 0.85)
-
-time = np.arange(0, len(precise_path)-1, 0.01)
-
-xx = cs_x(time)
-yy = cs_y(time)"""
 
 orientation = []
 for i in range(len(xx)):
