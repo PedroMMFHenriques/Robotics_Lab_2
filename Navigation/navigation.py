@@ -27,9 +27,6 @@ def sensor(car_pos, car_direction, background):
 
 
         for j in range(0, 5):
-
-           
-
             if s_colors[j] != (242, 243, 245,255) and hit[j] == 0:
                 sensor[j] = i
                 hit[j] = 1
@@ -112,7 +109,8 @@ def generate_motion(point_1, point_2):
 
 
 def check_colision(car_size, car_pos,angle, corner_angle, background):
-    """Function that detects if the car has droven outside of the road 
+    """
+    Function that detects if the car has droven outside of the road 
     inputs: dimension of the car , position of the car , orientation angle of the car the angle from the center of the car to its edges
     output: colision value 1 if the car as droven out of the road , 0 otherwise
     
@@ -160,7 +158,7 @@ def check_colision(car_size, car_pos,angle, corner_angle, background):
 
     return colision
 
-def car_model(v, w, pos, theta, L):
+def car_model(v, w, theta, L, SR):
     """Function that simulates de real life motion of a car given its velocity and stearing velocity
     Input: car velocity , car's stearing velocity ,cars position, cars orientation angle (theta), car wheal base distance 
     Output : variation in X , variation in Y , variation in orientation (THETA) """
@@ -175,7 +173,7 @@ def car_model(v, w, pos, theta, L):
     delta_theta = (180 * (math.sin(phi)/L) * v)/math.pi
     delta_phi = w
 
-    return delta_x, delta_y, delta_theta
+    return delta_x * SR, delta_y  * SR, delta_theta * SR
 
 
 def GPS(pos, angle):
@@ -236,7 +234,7 @@ bg_y = -(position[1] - (screen_size[1]//2))
 
 #lista_pontos =generate_motion(points[12],points[13])
 
-input_file = open("Robotics_Lab_2-main/guidance/trajectory_points.csv")
+input_file = open("trajectory_points.csv")
 
 csv_file = csv.reader(input_file)
 
@@ -280,32 +278,21 @@ gps_status = 1
 
 w = 0
 v = 0
+fps = 25
 
-print(car_size)
-
-
+sample_rate = 1/fps
 
 while running: 
 
-    clock.tick(25)
-
-    
+    #fps
+    clock.tick(fps)
 
     bg_x = -(int(position[0]) - (screen_size[0]//2))
     bg_y = -(int(position[1]) - (screen_size[1]//2)) 
 
-    
-
     car_pos = (-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 )
 
     screen.blit(background,(bg_x,bg_y))
-    #pygame.draw.circle(screen,red,screen_center, 20)
-   # pygame.draw.line(background,red,car_pos,(car_pos[0] + int(100 * math.cos(angle - 90)) , car_pos[1] + int(100 * math.cos(angle - 90))))
-   # pygame.draw.line(background,red,car_pos,((car_pos[0] + 1) , car_pos[1] + 1))
-
-    cor_estrada = background.get_at((-bg_x + screen_size[0]//2 + 20, -bg_y + screen_size[1]//2 +20))
-
-    
 
     #sensores = sensor((-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 ),angle ,background)
 
@@ -314,37 +301,56 @@ while running:
     if colisions != last_colision_val:
         colision_counter += colisions
         last_colision_val = colisions
-
-        
-    print(colision_counter)    
     
-
     car_copy = pygame.transform.rotate(car, angle)
     car_size = car_copy.get_size()
 
     screen.blit(car_copy,(screen_center[0] - car_size[0]//2,screen_center[1] - car_size[1]//2 ))
     keys = pygame.key.get_pressed()
 
+    
+    #MODO: TECLAS
+
+    delta_x , delta_y , new_angle = car_model(v,w, -(math.pi * angle)/180, 20, sample_rate)
+
+    position = (position[0] + (delta_x ), position[1] + (delta_y ))
+
+
+    angle -= new_angle
+
+    keys = pygame.key.get_pressed()
+
+    if keys[pygame.K_RIGHT]:
+            w += 0.1
+    if keys[pygame.K_LEFT]:
+            w -= 0.1
+     
+    if keys[pygame.K_UP]:
+            v += 10
+
+    if keys[pygame.K_DOWN]:
+            v -= 10
+    
+    
+    
     """
-    delta_x , delta_y , new_angle = car_model(v,w, (-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 ), -(math.pi * angle)/180, 20)
+    #MODO: RETAS
 
-    position = (position[0] + delta_x , position[1] + delta_y)
-
-
-    angle -= new_angle"""
-
-    """position = lista_pontos[next_point]
+    position = lista_pontos[next_point]
     if next_point + 1 < len(lista_pontos):
         next_point+=1
     else:
-        print(colision_counter)"""
-
-    
+        print(colision_counter)
+    """
+    """
+    #MODO: ONLY GUIDANCE
     position = csv_list[next_point]
     if next_point + 1 < len(csv_list):
         next_point+=1
 
+    """""
     """
+    GPS
 
     intended_gps_value = (-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 )
 
@@ -368,46 +374,14 @@ while running:
     print("-----------------")
 
     """
-    
-
-
-    
-
-
-    #sleep(0.1)
-    #print(next_point)
-    #print(position)
-    #print(angle)
 
     if next_point > 2:
         angle = -(180/np.pi)* position[2]
 
-    keys = pygame.key.get_pressed()
-
-    if keys[pygame.K_LEFT]:
-            w += 0.001
-    if keys[pygame.K_RIGHT]:
-            w -= 0.001
-     
-    if keys[pygame.K_UP]:
-            v += 0.1
-
-    if keys[pygame.K_DOWN]:
-            v -= 0.1
-           
-    
-            
-            
-
-
-
-    
     pygame.display.flip() 
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    
-    
-    pass
+print("Number of colisions: " + str(colision_counter))
