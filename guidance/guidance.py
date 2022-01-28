@@ -116,10 +116,20 @@ class Graph:
         return(self.printSolution(dist, parent, src, dest))
 
 def calc_dist(x1,y1,x2,y2):
+    """
+    Calculates the distance between 2 given points
+    Input: x and y position of a pair of points
+    Output : euclidean distance between the pair of points
+    """
     dist = sqrt((x1-x2)**2 + (y1-y2)**2)
     return dist
 
 def check_area(x, y, area_list):
+    """
+    Makes a list of drivable areas the point is inside
+    Input: x and y position of the point; list of drivable areas
+    Output: List of the areas the point is inside
+    """
     areas = []
     for row in area_list:
         if (x >= row[1] and y >= row[2] and x <= row[3] and y <= row[4]):
@@ -127,6 +137,11 @@ def check_area(x, y, area_list):
     return areas
 
 def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
+    """
+    For each area the point is inside, add the point to the node list and assigns which nodes are adjacent to it and which ones are adjacent to him
+    Input: x and y position of the point; list of nodes; list of drivable areas; (areas of the end point and its xy coordinates)
+    Output: Updated node list with the new node
+    """
     areas = check_area(x,y,area_list)
     if not areas: return None, None #point not in an area
    
