@@ -447,7 +447,6 @@ def read_small_steps_list():
     return steps_list
 
 def trajectory_interpol(precise_path, nodes_list):
-
     trajectory_x = []
     trajectory_y = []
     velocity_list_x = []
@@ -457,7 +456,7 @@ def trajectory_interpol(precise_path, nodes_list):
     #velocity = []
     if(len(precise_path) <= 2):
         theta = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])
-        traject, velocity, orientation  = interpol([precise_path[0][0], precise_path[0][1]], [precise_path[1][0], precise_path[0][1]], 0, 0, theta, theta, 0, 1)
+        traject, velocity, orientation  = interpol([precise_path[0][0], precise_path[0][1]], [precise_path[1][0], precise_path[1][1]], [0, 0], [0, 0], theta, theta, 0, 1)
         trajectory_x.append(traject[:][0])
         trajectory_y.append(traject[:][1]) 
         
@@ -510,8 +509,7 @@ def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (10/0.050
     elif(vel1[1] < -vel_max): vel1[1] = -vel_max
     if(vel2[1] > vel_max): vel2[1] = vel_max 
     elif(vel2[1] < -vel_max): vel2[1] = -vel_max
-    print(vel1[0]*0.05073825503*3.6)
-    print(vel1[1]*0.05073825503*3.6)
+
     if( (theta2-orient_1) > 3.1415/16 ):
         orient_1 = orient_1 + 3.1415/16     #varthetamax = pi/32 rads 
     if( (theta2-theta1) < -3.1415/16 ):
