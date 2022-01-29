@@ -389,6 +389,10 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
 
 
 def read_nodes_dist_file():
+    """
+    Reads file with the distances between each adjacent node and turns the data into a list
+    Output: List of the distances between each adjacent node
+    """
     #file1 = open('resources/path_nodes_dist.csv')
     file1 = open('path_nodes_dist.csv')
     type(file1)
@@ -406,6 +410,10 @@ def read_nodes_dist_file():
     return nodes_graph
 
 def read_nodes_list():
+    """
+    Reads file with the position of each node and turns the data into a list
+    Output: List of the position of each node
+    """
     file = open('path_nodes_positions.csv')
     #file = open('resources/path_nodes_positions.csv')
     type(file)
@@ -424,6 +432,10 @@ def read_nodes_list():
 
 
 def read_area_file():
+    """
+    Reads file with the corner positions of the (rectangular) drivable areas and turns the data into a list
+    Output: List of the corner positions of the (rectangular) drivable areas
+    """
     #file = open("resources/rectangles_position.csv")
     file = open("rectangles_position.csv")
     type(file)
@@ -442,6 +454,10 @@ def read_area_file():
 
 
 def read_small_steps_list():
+    """
+    Reads file with the position of each step ("mini" nodes between 2 nodes) and turns the data into a list
+    Output: List of the position of each step
+    """
     file = open('small_steps.csv')  
     #file = open('resources/small_steps.csv')
     type(file)
@@ -588,11 +604,11 @@ def trajectory_interpol(precise_path, nodes_list):
         gx = precise_path[1][0]  # goal x position [m]
         gy = precise_path[1][1] # goal y position [m]
         gyaw = syaw # goal yaw angle [rad]
-        gv = (2/0.05073825503)*1000/3600  # goal speed [m/s]
+        gv = (0/0.05073825503)*1000/3600  # goal speed [m/s]
         ga = 0  # goal accel [m/ss]
         max_accel = 3.0/0.05073825503  # max accel [m/ss]
         max_jerk = 0.5/0.05073825503  # max jerk [m/sss]
-        dt = 1   # time tick [s]
+        dt = 0.1   # time tick [s]
         time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
         time_list.append(time)
         trajectory_x.append(x)
@@ -603,9 +619,11 @@ def trajectory_interpol(precise_path, nodes_list):
 
         sa = 0.01/0.05073825503   # start accel [m/ss]
         ga = 0.01/0.05073825503   # goal accel [m/ss]
+        #max_accel = 0.5/0.05073825503  # max accel [m/ss]
+        #max_jerk = 0.51/0.05073825503  # max jerk [m/sss]
         max_accel = 0.5/0.05073825503  # max accel [m/ss]
         max_jerk = 0.51/0.05073825503  # max jerk [m/sss]
-        dt = 1   # time tick [s]
+        dt = 0.1   # time tick [s]
 
         
         for i in range(len(precise_path) - 1):
@@ -621,10 +639,10 @@ def trajectory_interpol(precise_path, nodes_list):
                 gv = (0/0.05073825503)*1000/3600  # goal speed [m/s]
                 time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
                 time_list.append(time)
-                trajectory_x.append(x)
-                trajectory_y.append(y)
-                orientation_list.append(yaw)  
-                velocity_list.append(v)
+                trajectory_x.append(x[:-1])
+                trajectory_y.append(y[:-1])
+                orientation_list.append(yaw[:-1])  
+                velocity_list.append(v[:-1])
             elif(i == 0):
                 sx = precise_path[0][0]  # start x position [m]
                 sy = precise_path[0][1]  # start y position [m]
@@ -632,14 +650,20 @@ def trajectory_interpol(precise_path, nodes_list):
                 sv = 0  # start speed [m/s]                          (5/0.05073825503)*1000/3600
                 gx = precise_path[1][0]  # goal x position [m]
                 gy = precise_path[1][1] # goal y position [m]
-                gyaw = atan2(precise_path[2][1]-precise_path[1][1], precise_path[2][0]-precise_path[1][0])  # goal yaw angle [rad] 
+                #gyaw = 1 * atan2(precise_path[2][1]-precise_path[1][1], precise_path[2][0]-precise_path[1][0])  # goal yaw angle [rad] 
+                ang1 = atan2(precise_path[2][1]-precise_path[1][1], precise_path[2][0]-precise_path[1][0])
+                ang2 = atan2(precise_path[2-1][1]-precise_path[1-1][1], precise_path[2-1][0]-precise_path[1-1][0])
+                """if(ang1 < 0): ang1 += 2*np.pi
+                if(ang2 < 0): ang2 += 2*np.pi
+                gyaw = (ang1 + ang2) /2# goal yaw angle [rad]"""
+                gyaw = atan2((sin(ang2) + sin(ang1)),(cos(ang1) + cos(ang2)))
                 gv = (1/0.05073825503)*1000/3600  # goal speed [m/s]
                 time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
                 time_list.append(time)
-                trajectory_x.append(x)
-                trajectory_y.append(y)
-                orientation_list.append(yaw)   
-                velocity_list.append(v) 
+                trajectory_x.append(x[:-1])
+                trajectory_y.append(y[:-1])
+                orientation_list.append(yaw[:-1])  
+                velocity_list.append(v[:-1])
 
             #else:
 
@@ -651,15 +675,23 @@ def trajectory_interpol(precise_path, nodes_list):
                 sv = velocity_list[-1][-1]  # start speed [m/s] 
                 gx = precise_path[i+1][0]  # goal x position [m]
                 gy = precise_path[i+1][1] # goal y position [m]
-                gyaw = atan2(precise_path[i+2][1]-precise_path[i+1][1], precise_path[i+2][0]-precise_path[i+1][0])  # goal yaw angle [rad]
+                #gyaw = 1 * atan2(precise_path[i+2][1]-precise_path[i+1][1], precise_path[i+2][0]-precise_path[i+1][0])  # goal yaw angle [rad]
+                ang1 = atan2(precise_path[i+2][1]-precise_path[i+1][1], precise_path[i+2][0]-precise_path[i+1][0])
+                ang2 = atan2(precise_path[i-1+2][1]-precise_path[i-1+1][1], precise_path[i-1+2][0]-precise_path[i-1+1][0])
+                """if(ang1*ang2 < 0 ):
+                    if(ang1 < 0): ang1 += 2*np.pi
+                    if(ang2 < 0): ang2 += 2*np.pi
+                gyaw = (ang1 + ang2) /2# goal yaw angle [rad]"""
+                gyaw = atan2((sin(ang2) + sin(ang1)),(cos(ang1) + cos(ang2)))
                 gv = (1/0.05073825503)*1000/3600  # goal speed [m/s]
                 time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
                 time_list.append(time)
-                trajectory_x.append(x)
-                trajectory_y.append(y)
-                orientation_list.append(yaw)  
-                velocity_list.append(v)
-    return [trajectory_x,trajectory_y], orientation_list
+                trajectory_x.append(x[:-1])
+                trajectory_y.append(y[:-1])
+                orientation_list.append(yaw[:-1])  
+                velocity_list.append(v[:-1])
+                
+    return [trajectory_x, trajectory_y], orientation_list
 
 
 
@@ -821,8 +853,6 @@ def plot_arrow(x, y, yaw, length=1.0, width=0.5, fc="r", ec="k"):  # pragma: no 
         plt.arrow(x, y, length * cos(yaw), length * sin(yaw),
                   fc=fc, ec=ec, head_width=width, head_length=width)
         plt.plot(x, y)
-
-
 
 
 def add_prev_and_next_node(path, xy_init, xy_end, area_list):
@@ -1166,11 +1196,17 @@ for i in orientation_list[:]:
     for j in i:
         orientation.append(float(j))
             
+for i in range(len(xx), 0, -1):
+    if(i%5 != 0):
+        del xx[i]
+        del yy[i]
+        del orientation[i]
 
 plt.imshow(mapa_ist)
 num = int(calc_dist(precise_path[0][0], precise_path[0][1], precise_path[1][0], precise_path[1][1])/20)
 
 plt.scatter(xx, yy, s = 10)
+
 
 plt.savefig('trajectory.pdf', bbox_inches='tight')
 plt.show()
@@ -1179,7 +1215,7 @@ plt.show()
 fout = open('trajectory_points.csv', 'w', newline='')
 writer = csv.writer(fout)
 for i in range(len(xx)):
-    if(i == (len(xx)-2)):
+    if(i == (len(xx)-1)):
         writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
     else:
         writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
