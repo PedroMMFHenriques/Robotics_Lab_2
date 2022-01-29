@@ -4,6 +4,8 @@ import math
 import numpy as np
 from pygame.locals import *
 import csv
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 
 def sensor(car_pos, car_direction, background):
@@ -214,9 +216,14 @@ points =((1083,257),
 
 screen = pygame.display.set_mode((1000,800))
 
-background = pygame.image.load("Tecnico_high_res_og_lowres_forreal-f383eb38-795c-11ec-a2bb-5e02152dd6df.png")
+car_image = "mclarinho_50px.png"
+background_image = "Tecnico_high_res_og_lowres_forreal-f383eb38-795c-11ec-a2bb-5e02152dd6df.png"
+trajectory_file = "trajectory_points.csv"
 
-car = pygame.image.load("mclarinho_50px.png")
+
+background = pygame.image.load(background_image)
+
+car = pygame.image.load(car_image)
 
 
 car_size = car.get_size()
@@ -234,7 +241,7 @@ bg_y = -(position[1] - (screen_size[1]//2))
 
 #lista_pontos =generate_motion(points[12],points[13])
 
-input_file = open("trajectory_points.csv")
+input_file = open(trajectory_file)
 
 csv_file = csv.reader(input_file)
 
@@ -249,7 +256,7 @@ for row in csv_file:
             row[i] = float(row[i])
         csv_list.append(row)
     
-
+intended_trajectory = csv_list
 
 running = True
 
@@ -270,6 +277,8 @@ next_point = 0
 yikes = 0
 
 clock = pygame.time.Clock()
+
+trajectory_made = []
 
 colision_counter = 0
 last_colision_val = 0
@@ -378,6 +387,8 @@ while running:
     if next_point > 2:
         angle = -(180/np.pi)* position[2]
 
+    trajectory_made.append((position[0],position[1]))
+
     pygame.display.flip() 
 
     for event in pygame.event.get():
@@ -385,3 +396,19 @@ while running:
             running = False
 
 print("Number of colisions: " + str(colision_counter))
+
+plt.rcParams["figure.figsize"] = (7,8)
+
+trajectory_made_x = [x for x,y in trajectory_made ]
+trajectory_made_y = [y for x,y in trajectory_made ]
+
+intended_trajectory_x = [x for x,y,z in intended_trajectory ]
+intended_trajectory_y = [y for x,y,z in intended_trajectory]
+
+mapa = mpimg.imread(background_image)
+plt.imshow(mapa)
+
+
+plt.plot(intended_trajectory_x,intended_trajectory_y)
+plt.plot(trajectory_made_x,trajectory_made_y)
+plt.show()
