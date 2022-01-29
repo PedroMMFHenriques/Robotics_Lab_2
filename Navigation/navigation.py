@@ -241,7 +241,7 @@ bg_y = -(position[1] - (screen_size[1]//2))
 
 #lista_pontos =generate_motion(points[12],points[13])
 
-input_file = open("Robotics_Lab_2-main/guidance/trajectory_points.csv")
+input_file = open(trajectory_file)
 
 csv_file = csv.reader(input_file)
 
