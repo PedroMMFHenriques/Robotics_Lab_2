@@ -466,7 +466,7 @@ def read_small_steps_list():
         steps_list.append(row)
     return steps_list
 
-def trajectory_interpol(precise_path, nodes_list):
+"""def trajectory_interpol(precise_path, nodes_list):
     trajectory_x = []
     trajectory_y = []
     velocity_list_x = []
@@ -506,7 +506,7 @@ def trajectory_interpol(precise_path, nodes_list):
             velocity_list_y.append(velocity[:][1])
             orientation_list.append(orientation)
 
-    return [trajectory_x,trajectory_y]
+    return [trajectory_x,trajectory_y], orientation_list
 
 def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (10/0.05073825503)*1000/3600): 
     tfi = t2 - t1
@@ -548,7 +548,7 @@ def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (10/0.050
     ai2y = (3/tfi**2)*(pos2[1] - pos1[1]) - (2/tfi)*velocity1y - (1/tfi)*velocity2y
     ai3y = -(2/tfi**3)*(pos2[1] - pos1[1]) + (1/tfi**2)*(velocity2y + velocity1y)
 
-    for i in np.arange(t1, t2+time_div, time_div):
+    for i in np.arange(t1+time_div, t2, time_div):
 
         if(i >= t2): break
 
@@ -567,8 +567,263 @@ def interpol(pos1, pos2, vel1, vel2, theta1, theta2, t1, t2, vel_max = (10/0.050
         else: 
             orientation.append(atan2(y_aux-y_interp[-2], x_aux-x_interp[-2]))
 
-    return [x_interp, y_interp], [vel_x_interp, vel_y_interp], orientation
+    return [x_interp, y_interp], [vel_x_interp, vel_y_interp], orientation"""
     
+
+def trajectory_interpol(precise_path, nodes_list):
+
+    time_list = []
+    trajectory_x = []
+    trajectory_y = []
+    velocity_list = []
+    orientation_list = []
+
+    if(len(precise_path) <= 2):
+
+        sx = precise_path[0][0]  # start x position [m]
+        sy = precise_path[0][1]  # start y position [m]
+        syaw = 0 #atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])  # start yaw angle [rad]
+        sv = (5/0.05073825503)*1000/3600  # start speed [m/s]                          (5/0.05073825503)*1000/3600
+        sa = 0  # start accel [m/ss]
+        gx = precise_path[1][0]  # goal x position [m]
+        gy = precise_path[1][1] # goal y position [m]
+        gyaw = syaw # goal yaw angle [rad]
+        gv = (2/0.05073825503)*1000/3600  # goal speed [m/s]
+        ga = 0  # goal accel [m/ss]
+        max_accel = 3.0/0.05073825503  # max accel [m/ss]
+        max_jerk = 0.5/0.05073825503  # max jerk [m/sss]
+        dt = 1   # time tick [s]
+        time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
+        time_list.append(time)
+        trajectory_x.append(x)
+        trajectory_y.append(y)
+        orientation_list.append(yaw)    
+        velocity_list.append(v)
+    else:
+
+        sa = 0.01/0.05073825503   # start accel [m/ss]
+        ga = 0.01/0.05073825503   # goal accel [m/ss]
+        max_accel = 0.5/0.05073825503  # max accel [m/ss]
+        max_jerk = 0.51/0.05073825503  # max jerk [m/sss]
+        dt = 1   # time tick [s]
+
+        
+        for i in range(len(precise_path) - 1):
+            if(i == (len(precise_path)-2)):
+                sx = trajectory_x[-1][-1]  # start x position [m]
+                sy = trajectory_y[-1][-1]   # start y position [m]
+                syaw = atan2(precise_path[i+1][1]-trajectory_y[-1][-1], precise_path[i+1][0]-trajectory_x[-1][-1])  # start yaw angle [rad]
+                syaw = orientation_list[-1][-1]
+                sv = (1/0.05073825503)*1000/3600  # start speed [m/s]                          (5/0.05073825503)*1000/3600
+                gx = precise_path[i+1][0]  # goal x position [m]
+                gy = precise_path[i+1][1] # goal y position [m]
+                gyaw = syaw  # goal yaw angle [rad]
+                gv = (0/0.05073825503)*1000/3600  # goal speed [m/s]
+                time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
+                time_list.append(time)
+                trajectory_x.append(x)
+                trajectory_y.append(y)
+                orientation_list.append(yaw)  
+                velocity_list.append(v)
+            elif(i == 0):
+                sx = precise_path[0][0]  # start x position [m]
+                sy = precise_path[0][1]  # start y position [m]
+                syaw = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])  # start yaw angle [rad]
+                sv = 0  # start speed [m/s]                          (5/0.05073825503)*1000/3600
+                gx = precise_path[1][0]  # goal x position [m]
+                gy = precise_path[1][1] # goal y position [m]
+                gyaw = atan2(precise_path[2][1]-precise_path[1][1], precise_path[2][0]-precise_path[1][0])  # goal yaw angle [rad] 
+                gv = (1/0.05073825503)*1000/3600  # goal speed [m/s]
+                time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
+                time_list.append(time)
+                trajectory_x.append(x)
+                trajectory_y.append(y)
+                orientation_list.append(yaw)   
+                velocity_list.append(v) 
+
+            #else:
+
+            else:
+                sx = trajectory_x[-1][-1]  # start x position [m]
+                sy = trajectory_y[-1][-1]   # start y position [m]
+                #syaw = atan2(precise_path[i+1][1]-trajectory_y[-1][-1], precise_path[i+1][0]-trajectory_x[-1][-1])  # start yaw angle [rad]
+                syaw = orientation_list[-1][-1]
+                sv = velocity_list[-1][-1]  # start speed [m/s] 
+                gx = precise_path[i+1][0]  # goal x position [m]
+                gy = precise_path[i+1][1] # goal y position [m]
+                gyaw = atan2(precise_path[i+2][1]-precise_path[i+1][1], precise_path[i+2][0]-precise_path[i+1][0])  # goal yaw angle [rad]
+                gv = (1/0.05073825503)*1000/3600  # goal speed [m/s]
+                time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
+                time_list.append(time)
+                trajectory_x.append(x)
+                trajectory_y.append(y)
+                orientation_list.append(yaw)  
+                velocity_list.append(v)
+    return [trajectory_x,trajectory_y], orientation_list
+
+
+
+
+
+MAX_T = 100.0  # maximum time to the goal [s]
+MIN_T = 5.0  # minimum time to the goal[s]
+show_animation = False
+
+class QuinticPolynomial:
+
+    def __init__(self, xs, vxs, axs, xe, vxe, axe, time):
+        # calc coefficient of quintic polynomial
+        # See jupyter notebook document for derivation of this equation.
+        self.a0 = xs
+        self.a1 = vxs
+        self.a2 = axs / 2.0
+
+        A = np.array([[time ** 3, time ** 4, time ** 5],
+                      [3 * time ** 2, 4 * time ** 3, 5 * time ** 4],
+                      [6 * time, 12 * time ** 2, 20 * time ** 3]])
+        b = np.array([xe - self.a0 - self.a1 * time - self.a2 * time ** 2,
+                      vxe - self.a1 - 2 * self.a2 * time,
+                      axe - 2 * self.a2])
+        x = np.linalg.solve(A, b)
+
+        self.a3 = x[0]
+        self.a4 = x[1]
+        self.a5 = x[2]
+
+    def calc_point(self, t):
+        xt = self.a0 + self.a1 * t + self.a2 * t ** 2 + \
+             self.a3 * t ** 3 + self.a4 * t ** 4 + self.a5 * t ** 5
+
+        return xt
+
+    def calc_first_derivative(self, t):
+        xt = self.a1 + 2 * self.a2 * t + \
+             3 * self.a3 * t ** 2 + 4 * self.a4 * t ** 3 + 5 * self.a5 * t ** 4
+
+        return xt
+
+    def calc_second_derivative(self, t):
+        xt = 2 * self.a2 + 6 * self.a3 * t + 12 * self.a4 * t ** 2 + 20 * self.a5 * t ** 3
+
+        return xt
+
+    def calc_third_derivative(self, t):
+        xt = 6 * self.a3 + 24 * self.a4 * t + 60 * self.a5 * t ** 2
+
+        return xt
+
+
+def quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt):
+    """
+    quintic polynomial planner
+    input
+        s_x: start x position [m]
+        s_y: start y position [m]
+        s_yaw: start yaw angle [rad]
+        sa: start accel [m/ss]
+        gx: goal x position [m]
+        gy: goal y position [m]
+        gyaw: goal yaw angle [rad]
+        ga: goal accel [m/ss]
+        max_accel: maximum accel [m/ss]
+        max_jerk: maximum jerk [m/sss]
+        dt: time tick [s]
+    return
+        time: time result
+        rx: x position result list
+        ry: y position result list
+        ryaw: yaw angle result list
+        rv: velocity result list
+        ra: accel result list
+    """
+
+    if(sv > 15):
+        sv = 15
+
+    vxs = sv * cos(syaw)
+    vys = sv * sin(syaw)
+    vxg = gv * cos(gyaw)
+    vyg = gv * sin(gyaw)
+
+    axs = sa * cos(syaw)
+    ays = sa * sin(syaw)
+    axg = ga * cos(gyaw)
+    ayg = ga * sin(gyaw)
+
+    time, rx, ry, ryaw, rv, ra, rj = [], [], [], [], [], [], []
+
+    for T in np.arange(MIN_T, MAX_T, MIN_T):
+        xqp = QuinticPolynomial(sx, vxs, axs, gx, vxg, axg, T)
+        yqp = QuinticPolynomial(sy, vys, ays, gy, vyg, ayg, T)
+
+        time, rx, ry, ryaw, rv, ra, rj = [], [], [], [], [], [], []
+
+        for t in np.arange(0.0, T + dt, dt):
+            time.append(t)
+            rx.append(xqp.calc_point(t))
+            ry.append(yqp.calc_point(t))
+
+            vx = xqp.calc_first_derivative(t)
+            vy = yqp.calc_first_derivative(t)
+            v = np.hypot(vx, vy)
+
+            yaw = atan2(vy, vx)
+            rv.append(v)
+            ryaw.append(yaw)
+
+            ax = xqp.calc_second_derivative(t)
+            ay = yqp.calc_second_derivative(t)
+            a = np.hypot(ax, ay)
+            if len(rv) >= 2 and rv[-1] - rv[-2] < 0.0:
+                a *= -1
+            ra.append(a)
+
+            jx = xqp.calc_third_derivative(t)
+            jy = yqp.calc_third_derivative(t)
+            j = np.hypot(jx, jy)
+            if len(ra) >= 2 and ra[-1] - ra[-2] < 0.0:
+                j *= -1
+            rj.append(j)
+
+        if max([abs(i) for i in ra]) <= max_accel and max([abs(i) for i in rj]) <= max_jerk:
+            #print("find path!!")
+            break
+
+    if show_animation:  # pragma: no cover
+        for i, _ in enumerate(time):
+            plt.cla()
+            # for stopping simulation with the esc key.
+            plt.gcf().canvas.mpl_connect('key_release_event',
+                                         lambda event: [exit(0) if event.key == 'escape' else None])
+            plt.grid(True)
+            plt.axis("equal")
+            plot_arrow(sx, sy, syaw)
+            plot_arrow(gx, gy, gyaw)
+            plot_arrow(rx[i], ry[i], ryaw[i])
+            plt.title("Time[s]:" + str(time[i])[0:4] +
+                      " v[m/s]:" + str(rv[i])[0:4] +
+                      " a[m/ss]:" + str(ra[i])[0:4] +
+                      " jerk[m/sss]:" + str(rj[i])[0:4],
+                      )
+            plt.pause(0.001)
+
+    return time, rx, ry, ryaw, rv, ra, rj
+
+def plot_arrow(x, y, yaw, length=1.0, width=0.5, fc="r", ec="k"):  # pragma: no cover
+    """
+    Plot arrow
+    """
+
+    if not isinstance(x, float):
+        for (ix, iy, iyaw) in zip(x, y, yaw):
+            plot_arrow(ix, iy, iyaw)
+    else:
+        plt.arrow(x, y, length * cos(yaw), length * sin(yaw),
+                  fc=fc, ec=ec, head_width=width, head_length=width)
+        plt.plot(x, y)
+
+
+
 
 def add_prev_and_next_node(path, xy_init, xy_end, area_list):
     areas_init = check_area(xy_init[0], xy_init[1], area_list)
@@ -783,7 +1038,6 @@ def init_to_trajectory(complete_path, nodes_list, steps_list):
         step_dist = calc_dist(step_point[0], step_point[1], first_node_point[0], first_node_point[1])
 
         if step_dist < init_dist: init_to_first_node.append([step_point[0],step_point[1]])
-    print(init_to_first_node)
     return init_to_first_node
 
 def end_from_trajectory(complete_path, nodes_list, steps_list):
@@ -804,7 +1058,6 @@ def end_from_trajectory(complete_path, nodes_list, steps_list):
         if step_dist < end_dist: end_from_last_node.append([step_point[0],step_point[1]])
 
     end_from_last_node.append([end_point[0], end_point[1]])
-    print(end_from_last_node)
     return end_from_last_node
 
 def gen_precise_path(path, steps_list, nodes_list, area_list):
@@ -824,7 +1077,6 @@ def gen_precise_path(path, steps_list, nodes_list, area_list):
                 for node in first_nodes:
                     precise_path.append(node)
         elif(i == (len(path) - 2)): 
-            print(complete_path)
             if complete_path[-1] == path[-1]: precise_path.append(list(xy_end)) #if last node is the actual end node
             else: 
                 last_nodes = end_from_trajectory(complete_path, nodes_list, steps_list)
@@ -858,9 +1110,6 @@ while(not valid_points):
     plt.imshow(mapa_ist)
     
     inputs = plt.ginput(2)
-
-    """fig1 = plt.figure() 
-    fig1.canvas.mpl_connect('close_event', lambda _: fig1.canvas.manager.window.destroy()) #cena para fechar caso nao fuincione"""
     
     x_init = int(round(inputs[0][0]))
     y_init = int(round(inputs[0][1]))
@@ -893,7 +1142,6 @@ while(not valid_points):
         continue
     
     valid_points = True
-    #plt.close()
 
 path = g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
 
@@ -901,11 +1149,11 @@ nodes_list.append((x_end, y_end))
 nodes_list.append((x_init, y_init))
 
 precise_path = gen_precise_path(path, steps_list, nodes_list, area_list)
-print(precise_path)
 
-vetor_trajectories = trajectory_interpol(precise_path, nodes_list)
+vetor_trajectories, orientation_list = trajectory_interpol(precise_path, nodes_list)
 xx = []
 yy = []
+orientation = []
 for i in vetor_trajectories[0][:]:
     for j in i:
         xx.append(int(j))
@@ -913,16 +1161,11 @@ for i in vetor_trajectories[0][:]:
 for i in vetor_trajectories[1][:]:
     for j in i:
         yy.append(int(j))
-
-orientation = []
-for i in range(len(xx)):
-    if(i == len(xx) - 1): 
-        theta = atan2(yy[i]-yy[i-1], xx[i]-xx[i-1])
-    else:
-        theta = atan2(yy[i+1]-yy[i], xx[i+1]-xx[i])
-
-    orientation.append(theta)
-    
+        
+for i in orientation_list[:]:
+    for j in i:
+        orientation.append(float(j))
+            
 
 plt.imshow(mapa_ist)
 num = int(calc_dist(precise_path[0][0], precise_path[0][1], precise_path[1][0], precise_path[1][1])/20)
@@ -936,7 +1179,7 @@ plt.show()
 fout = open('trajectory_points.csv', 'w', newline='')
 writer = csv.writer(fout)
 for i in range(len(xx)):
-    if(i == (len(xx)-1)):
+    if(i == (len(xx)-2)):
         writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
     else:
         writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])

@@ -218,7 +218,7 @@ screen = pygame.display.set_mode((1000,800))
 
 car_image = "mclarinho_50px.png"
 background_image = "Tecnico_high_res_og_lowres_forreal-f383eb38-795c-11ec-a2bb-5e02152dd6df.png"
-trajectory_file = "trajectory_points.csv"
+trajectory_file = "../guidance/trajectory_points.csv"
 
 
 background = pygame.image.load(background_image)
@@ -318,7 +318,7 @@ while running:
     keys = pygame.key.get_pressed()
 
     
-    #MODO: TECLAS
+    """#MODO: TECLAS
 
     delta_x , delta_y , new_angle = car_model(v,w, -(math.pi * angle)/180, 20, sample_rate)
 
@@ -338,7 +338,7 @@ while running:
             v += 10
 
     if keys[pygame.K_DOWN]:
-            v -= 10
+            v -= 10"""
     
     
     
@@ -351,13 +351,13 @@ while running:
     else:
         print(colision_counter)
     """
-    """
+
     #MODO: ONLY GUIDANCE
     position = csv_list[next_point]
     if next_point + 1 < len(csv_list):
         next_point+=1
 
-    """""
+    
     """
     GPS
 
