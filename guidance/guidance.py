@@ -394,8 +394,7 @@ def read_nodes_dist_file():
     Reads file with the distances between each adjacent node and turns the data into a list
     Output: List of the distances between each adjacent node
     """
-    #file1 = open('resources/path_nodes_dist.csv')
-    file1 = open('path_nodes_dist.csv')
+    file1 = open('resources/path_nodes_dist.csv')
     type(file1)
 
     csvreader = csv.reader(file1)
@@ -415,8 +414,8 @@ def read_nodes_list():
     Reads file with the position of each node and turns the data into a list
     Output: List of the position of each node
     """
-    file = open('path_nodes_positions.csv')
-    #file = open('resources/path_nodes_positions.csv')
+
+    file = open('resources/path_nodes_positions.csv')
     type(file)
 
     csvreader = csv.reader(file)
@@ -437,8 +436,7 @@ def read_area_file():
     Reads file with the corner positions of the (rectangular) drivable areas and turns the data into a list
     Output: List of the corner positions of the (rectangular) drivable areas
     """
-    #file = open("resources/rectangles_position.csv")
-    file = open("rectangles_position.csv")
+    file = open("resources/rectangles_position.csv")
     type(file)
 
     csvreader = csv.reader(file)
@@ -459,8 +457,7 @@ def read_small_steps_list():
     Reads file with the position of each step ("mini" nodes between 2 nodes) and turns the data into a list
     Output: List of the position of each step
     """
-    file = open('small_steps.csv')  
-    #file = open('resources/small_steps.csv')
+    file = open('resources/small_steps.csv')
     type(file)
 
     csvreader = csv.reader(file)
@@ -1022,8 +1019,7 @@ n_nodes = len(nodes_graph)
 valid_points = False
 
 while(not valid_points):
-    #mapa_ist = plt.imread('resources/ist_map.png')
-    mapa_ist = plt.imread('ist_map.png')
+    mapa_ist = plt.imread('resources/ist_map.png')
     manager = plt.get_current_fig_manager()
     manager.window.showMaximized()
 
@@ -1037,10 +1033,8 @@ while(not valid_points):
     y_end = int(round(inputs[1][1]))
 
     plt.scatter([x_init, x_end], [y_init, y_end], c = "r", marker = "+")
-    plt.savefig('chosen_points.pdf', bbox_inches='tight')
 
-    #only_street_mat = plt.imread("resources/ist_only_streets.png")
-    only_street_mat = plt.imread("ist_only_streets.png")
+    only_street_mat = plt.imread("resources/ist_only_streets.png")
 
     #Note: only_street_mat is transposed
     if(only_street_mat[y_init][x_init] == 1 or only_street_mat[y_end][x_end] == 1): 
