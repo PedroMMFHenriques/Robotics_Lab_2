@@ -895,7 +895,6 @@ def trajectory_interpol(precise_path):
     Input: list with all the point coordinates that the car needs to travel to
     Output: list with interpolated trajectory (x, y), list with interpolated orientations (theta)
     """
-    time_list = []
     trajectory_x = []
     trajectory_y = []
     velocity_list = []
@@ -916,11 +915,11 @@ def trajectory_interpol(precise_path):
         max_jerk = 0.5/0.05073825503  # max jerk [m/sss]
         dt = 0.1   # time tick [s]
         time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
-        time_list.append(time)
         trajectory_x.append(x)
         trajectory_y.append(y)
         orientation_list.append(yaw)    
         velocity_list.append(v)
+
     else:
 
         sa = 0.01/0.05073825503   # start accel [m/ss]
@@ -928,7 +927,6 @@ def trajectory_interpol(precise_path):
         max_accel = 0.5/0.05073825503  # max accel [m/ss]
         max_jerk = 0.51/0.05073825503  # max jerk [m/sss]
         dt = 0.1   # time tick [s]
-
         
         for i in range(len(precise_path) - 1):
             if(i == (len(precise_path)-2)):
@@ -947,6 +945,7 @@ def trajectory_interpol(precise_path):
                 trajectory_y.append(y[:-1])
                 orientation_list.append(yaw[:-1])  
                 velocity_list.append(v[:-1])
+                
             elif(i == 0):
                 sx = precise_path[0][0]  # start x position [m]
                 sy = precise_path[0][1]  # start y position [m]
@@ -1045,10 +1044,10 @@ while(not valid_points):
     plt.close('all')
     valid_points = True
 
-print(nodes_graph)
+
 #Get the path by applying Dijkstra
 path = g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
-print(path)
+
 nodes_list.append((x_end, y_end))
 nodes_list.append((x_init, y_init))
 
@@ -1072,8 +1071,8 @@ for i in vetor_trajectories[1][:]:
 for i in orientation_list[:]:
     for j in i:
         orientation.append(float(j))
-            
-for i in range(len(xx), 0, -1):
+
+for i in range(len(xx)-1, -1, -1):
     if(i%5 != 0):
         del xx[i]
         del yy[i]
@@ -1082,14 +1081,15 @@ for i in range(len(xx), 0, -1):
 manager = plt.get_current_fig_manager()
 manager.window.showMaximized()
 plt.imshow(mapa_ist)
-plt.scatter(xx, yy, s = 10)
+plt.scatter(xx, yy, s = 8)
+plt.scatter([x_init, x_end], [y_init, y_end], s = 100, c = 'r', marker = '+')
 plt.savefig('trajectory.pdf', bbox_inches='tight')
 plt.show()
 
 #Save the trajectory to a new file
 fout = open('trajectory_points.csv', 'w', newline='')
 writer = csv.writer(fout)
-for i in range(len(xx)):
+for i in range(1,len(xx)):
     if(i == (len(xx)-1)):
         writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
     else:
