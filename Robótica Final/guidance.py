@@ -1,3 +1,12 @@
+# Robotics lab 2, Guidance
+"""
+    Authors:
+	- Luís Barriga,    93115
+	- Pedro Henriques, 93159
+    - Rafael Carvalho, 93164
+    Date last modified: 30/01/2022
+"""
+
 import matplotlib
 matplotlib.use('Qt5Agg') # pip install pyqt5
 import csv
@@ -6,13 +15,26 @@ import matplotlib.pyplot as plt
 from math import *
 from scipy.interpolate import *
 
-class Graph:
+"""
+    Graph class and respective functions, before being modified to fit this project, were based on the code by:
 
+    Author: Aditya Goel
+    Availability: https://www.geeksforgeeks.org/printing-paths-dijkstras-shortest-path-algorithm/
+"""
+class Graph:
+    """
+        Class containing the functions necessary to apply the Dijkstra algorithm.
+    """
     def minDistance(self,dist,queue):
         """
-        A utility function to find the vertex with minimum dist value, from the set of vertices still in queue
+        Finds the node (vertex) with minimum distance value from the list of nodes still in queue
+
         Input:
+            - dist: list of the distances between each node
+            - queue: list of nodes still in queue
+
         Output:
+            - min_index: index of the minimum distance value node still in queue
         """
         #Initialize min value and min_index as -1
         minimum = float("Inf")
@@ -26,95 +48,115 @@ class Graph:
         return min_index
  
  
-    # Function to print shortest path
-    # from source to j
-    # using parent array
-    def printPath(self, parent, j, path):
-        #Base Case : If j is source
-        if parent[j] == -1 :
-            #print(j)
-            path.append(j)
+    def appendPath(self, parent, dest, path):
+        """
+        Recursive function that appends the shortest path from source to the destiny using parent array.
+
+        Input:
+            - parent: list of the shortest path tree
+            - dest: destiny node
+            - path: path from the source to a certain node (so far)
+        
+        Output:
+            - path from the source to a certain node (so far)
+        """
+        #Base case: if destiny is the source
+        if parent[dest] == -1:
+            #print(dest)
+            path.append(dest)
             return
 
-        path.append(j)
-        self.printPath(parent , parent[j], path)
+        path.append(dest)
+        self.appendPath(parent , parent[dest], path)
         
-        #print (j)
+        #print(dest)
         return(path)
  
-    # A utility function to print
-    # the constructed distance
-    # array
-    def printSolution(self, dist, parent, origin, dest):
-        #print("Origin: %d\n Destination: %d\nDistance: %d\nPath: " % (origin, dest, dist[dest]))
+    
+    def findSolution(self, dist, parent, src, dest):
+        """
+            Constructs the path from the source to the destiny.
+
+            Input:
+                - dist: list of the distance between nodes
+                - parent: list of the shortest path tree
+                - src: source node
+                - dest: destiny node
+            
+            Output:
+                - path: path from the source to the destiny.
+        """
+        #print("Source: %d\n Destination: %d\nDistance: %d\nPath: " % (origin, dest, dist[dest]))
         path = []
-        path = self.printPath(parent,dest, path)
+        path = self.appendPath(parent, dest, path)
         
         return(path[::-1])
  
  
-    '''Function that implements Dijkstra's single source shortest path
-    algorithm for a graph represented using adjacency matrix
-    representation'''
     def dijkstra(self, graph, src, dest):
- 
+        """
+        Implements Dijkstra's single source shortest path algorithm for a graph represented using adjacency matrix
+
+        Input:
+            - graph: graph corresponding to the adjacency matrix representation the nodes and its edges
+            - src: source node
+            - dest: destination node
+        
+        Output:
+            - path: list with the shortest path between the src node and the dest node
+        """
         row = len(graph)
         col = len(graph[0])
  
-        # The output array. dist[i] will hold
-        # the shortest distance from src to i
-        # Initialize all distances as INFINITE
+        #dist[i] will hold the shortest distance from src to i
+        #Initialize all distances as INFINITE
         dist = [float("Inf")] * row
  
-        #Parent array to store
-        # shortest path tree
+        #Parent array to store the shortest path tree
         parent = [-1] * row
  
-        # Distance of source vertex
-        # from itself is always 0
+        #Distance of source node from itself is always 0
         dist[src] = 0
      
-        # Add all vertices in queue
+        #Add all nodes in queue
         queue = []
         for i in range(row):
             queue.append(i)
              
-        #Find shortest path for all vertices
+        #Find shortest path for all nodes
         while queue:
  
-            # Pick the minimum dist vertex
-            # from the set of vertices
-            # still in queue
+            #Pick the minimum dist node from the set of nodes still in queue
             u = self.minDistance(dist,queue)
  
-            # remove min element    
+            #Remove min element    
             queue.remove(u)
  
-            # Update dist value and parent
-            # index of the adjacent vertices of
-            # the picked vertex. Consider only
-            # those vertices which are still in
-            # queue
+            #Update dist value and parent index of the adjacent nodes of the picked node. Consider only those nodes which are still in queue
             for i in range(col):
-                '''Update dist[i] only if it is in queue, there is
-                an edge from u to i, and total weight of path from
-                src to i through u is smaller than current value of
-                dist[i]'''
+                """Update dist[i] only if it is in queue, there is an edge from u to i, and total weight of path from
+                src to i through u is smaller than current value of dist[i]"""
                 if graph[u][i] and i in queue:
                     if dist[u] + graph[u][i] < dist[i]:
                         dist[i] = dist[u] + graph[u][i]
                         parent[i] = u
-        return(self.printSolution(dist, parent, src, dest))
+        path = self.findSolution(dist, parent, src, dest)
+        return path
 
 
-MAX_T = 100.0  # maximum time to the goal [s]
-MIN_T = 3.0  # minimum time to the goal[s]
-show_animation = False
+"""
+    QuinticPolynomials class and quintic_polynomials_planner function, were based on the code by:
+
+    Author: Atsushi Sakai
+    Availability: https://github.com/AtsushiSakai/PythonRobotics/blob/master/PathPlanning/QuinticPolynomialsPlanner/quintic_polynomials_planner.py
+"""
+MAX_T = 100.0  #Maximum time to the goal [s]
+MIN_T = 1.0  #Minimum time to the goal [s]
 
 class QuinticPolynomial:
 
     def __init__(self, xs, vxs, axs, xe, vxe, axe, time):
-        # calc coefficient of quintic polynomial
+        #Calculates coefficients of quintic polynomial
         self.a0 = xs
         self.a1 = vxs
         self.a2 = axs / 2.0
@@ -134,48 +176,45 @@ class QuinticPolynomial:
     def calc_point(self, t):
         xt = self.a0 + self.a1 * t + self.a2 * t ** 2 + \
              self.a3 * t ** 3 + self.a4 * t ** 4 + self.a5 * t ** 5
-
         return xt
 
     def calc_first_derivative(self, t):
         xt = self.a1 + 2 * self.a2 * t + \
              3 * self.a3 * t ** 2 + 4 * self.a4 * t ** 3 + 5 * self.a5 * t ** 4
-
         return xt
 
     def calc_second_derivative(self, t):
         xt = 2 * self.a2 + 6 * self.a3 * t + 12 * self.a4 * t ** 2 + 20 * self.a5 * t ** 3
-
         return xt
 
     def calc_third_derivative(self, t):
         xt = 6 * self.a3 + 24 * self.a4 * t + 60 * self.a5 * t ** 2
-
         return xt
-
 
 def quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt):
     """
-    quintic polynomial planner
-    input
-        s_x: start x position [m]
-        s_y: start y position [m]
-        s_yaw: start yaw angle [rad]
-        sa: start accel [m/ss]
-        gx: goal x position [m]
-        gy: goal y position [m]
-        gyaw: goal yaw angle [rad]
-        ga: goal accel [m/ss]
-        max_accel: maximum accel [m/ss]
-        max_jerk: maximum jerk [m/sss]
-        dt: time tick [s]
-    return
-        time: time result
-        rx: x position result list
-        ry: y position result list
-        ryaw: yaw angle result list
-        rv: velocity result list
-        ra: accel result list
+    Function that interpolates the trajectory between two points based on the specifications given
+    
+    Input:
+        - s_x: Initial x position [pixels]
+        - s_y: Initial y position pixels]
+        - s_yaw: Initial yaw angle [rad]
+        - sa: Initial accel [pixels/ss]
+        - gx: goal x position [pixels]
+        - gy: goal y position [pixels]
+        - gyaw: goal yaw angle [rad]
+        - ga: goal accel [pixels/ss]
+        - max_accel: maximum accel [pixels/ss]
+        - max_jerk: maximum jerk [pixels/sss]
+        - dt: time tick [s]
+    
+    Output:
+        - time: time result
+        - rx: x position result list
+        - ry: y position result list
+        - ryaw: yaw angle result list
+        - rv: velocity result list
+        - ra: accel result list
     """
 
     vxs = sv * cos(syaw)
@@ -228,10 +267,13 @@ def quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_
 
     return time, rx, ry, ryaw, rv, ra, rj
 
+
 def read_nodes_dist_file():
     """
     Reads file with the distances between each adjacent node and turns the data into a list
-    Output: List of the distances between each adjacent node
+
+    Output:
+        - nodes_graph: list of the distances between each adjacent node
     """
     file1 = open('resources/path_nodes_dist.csv')
     type(file1)
@@ -251,9 +293,10 @@ def read_nodes_dist_file():
 def read_nodes_list():
     """
     Reads file with the position of each node and turns the data into a list
-    Output: List of the position of each node
-    """
 
+    Output:
+        - nodes_list: list of the position of each node
+    """
     file = open('resources/path_nodes_positions.csv')
     type(file)
 
@@ -273,7 +316,9 @@ def read_nodes_list():
 def read_area_file():
     """
     Reads file with the corner positions of the (rectangular) drivable areas and turns the data into a list
-    Output: List of the corner positions of the (rectangular) drivable areas
+    
+    Output: 
+        - area_list: list of the corner positions of the (rectangular) drivable areas
     """
     file = open("resources/rectangles_position.csv")
     type(file)
@@ -294,7 +339,9 @@ def read_area_file():
 def read_small_steps_list():
     """
     Reads file with the position of each step (intermediate targets between 2 nodes) and turns the data into a list
-    Output: List of the position of each step
+    
+    Output: 
+        - steps_list: list of the position of each step
     """
     file = open('resources/small_steps.csv')
     type(file)
@@ -322,8 +369,12 @@ def read_small_steps_list():
 def calc_dist(x1,y1,x2,y2):
     """
     Calculates the distance between 2 given points
-    Input: x and y position of a pair of points
-    Output : euclidean distance between the pair of points
+
+    Input: 
+        - x1,y1,x2,y2: x and y position of a pair of points
+
+    Output: 
+        - dist: euclidean distance between the pair of points
     """
     dist = sqrt((x1-x2)**2 + (y1-y2)**2)
     return dist
@@ -331,8 +382,13 @@ def calc_dist(x1,y1,x2,y2):
 def check_area(x, y, area_list):
     """
     Makes a list of drivable areas the point is inside
-    Input: x and y position of the point; list of drivable areas
-    Output: List of the areas the point is inside
+
+    Input:
+        - x,y: x and y position of the point;
+        - area_list: list of drivable areas
+
+    Output:
+        - areas: list of the areas the point is inside
     """
     areas = []
     for row in area_list:
@@ -340,11 +396,18 @@ def check_area(x, y, area_list):
             if(row[0] not in areas): areas.append(row[0])
     return areas
 
-def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
+def add_node(x, y, node_graph, area_list, final_areas=None, xy_final=None):
     """
     For each area the point is inside, add the point to the node list and assigns which nodes are adjacent to it and which ones it is adjacent to
-    Input: x and y position of the point; list of nodes; list of drivable areas; (areas of the end point and its xy coordinates)
-    Output: Updated node list with the new node
+
+    Input:
+        - x,y: x and y position of the point; 
+        - node_graph: list of nodes; 
+        - list of drivable areas; 
+        - final_areas, xy_final: areas of the end point and its xy coordinates
+    Output: 
+        - node_graph: updated node list with the new node
+        - areas: list of the areas the point is inside
     """
     areas = check_area(x,y,area_list)
     if not areas: return None, None #point not in an area
@@ -360,7 +423,7 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
             new_node[1] = calc_dist(x,y,1083,257)  
             node_graph[1][-1] = new_node[1]
 
-            #if init node and end node in the same area(s):
+            #if init point and end point in the same area(s):
             if(final_areas != None and area in final_areas):
                 new_node[-2] = calc_dist(x,y,xy_final[0],xy_final[1])
                 node_graph[-1][-1] = new_node[-2]
@@ -594,8 +657,14 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
 def add_prev_and_next_node(path, xy_init, xy_end, area_list):
     """
     Find in which edge the chosen initial and end points are by determining which node came before or after, respectively, adding them to the path
-    Input: Path (list of nodes in the path); coordinates of the initial and end points; list of the corners of each area
-    Output: Extended path with the new auxiliary nodes
+
+    Input:
+        - path: list of nodes in the path;
+        - xy_init, xy_end: coordinates of the initial and end points;
+        - area_list: list of the corners of each drivable area
+
+    Output:
+        - complete_path: extended path with the new auxiliary nodes
     """
     #find the area(s) the points are in
     areas_init = check_area(xy_init[0], xy_init[1], area_list)
@@ -797,8 +866,14 @@ def add_prev_and_next_node(path, xy_init, xy_end, area_list):
 def init_to_trajectory(complete_path, nodes_list, steps_list):
     """
     Find the intermediate targets (steps) that lead from the chosen initial point to the first node by comparing the distances to it
-    Input: Extended path (with the node previous from the initial point); list with the position of each node; list with the position of each step (intermediate targets between 2 nodes) 
-    Output: Path from the initial point to the first node
+    
+    Input:
+        - complete_path: extended path (with the node previous from the initial point); 
+        - nodes_list: list with the position of each node; 
+        - steps_list: list with the position of each step (intermediate targets between 2 nodes) 
+    
+    Output:
+        - init_to_first_node: path from the initial point to the first node
     """
     #Node before the intial point chosen
     prev_node = complete_path[0]
@@ -828,8 +903,14 @@ def init_to_trajectory(complete_path, nodes_list, steps_list):
 def end_from_trajectory(complete_path, nodes_list, steps_list):
     """
     Find the intermediate targets (steps) that lead from the last node to the chosen end point by comparing the distances to it
-    Input: Extended path (with the node after the end point); list with the position of each node; list with the position of each step (intermediate targets between 2 nodes) 
-    Output: Path from the final node to the end point
+    
+    Input:
+        - complete_path: extended path (with the node previous from the initial point); 
+        - nodes_list: list with the position of each node; 
+        - steps_list: list with the position of each step (intermediate targets between 2 nodes) 
+    
+    Output:
+        - end_from_last_node: path from the last node to the end point
     """
     #Node after the end point chosen
     next_node = complete_path[-1]
@@ -859,8 +940,14 @@ def end_from_trajectory(complete_path, nodes_list, steps_list):
 def gen_precise_path(path, steps_list, nodes_list, area_list):
     """
     Receives the path calculated by the Djikstra algorithm and improves it by adding intermediate targets between each node
-    Input: Path (calculated by Djikstra); list with the position of each step (intermediate targets between 2 nodes); list of drivable areas;
-    Output: Precise path from the initial node to the end point
+
+    Input:
+        - path: list of nodes in the path; 
+        - steps_list: list with the position of each step (intermediate targets between 2 nodes); 
+        - area_list: list of drivable areas;
+
+    Output:
+        - precise_path: path from the initial point to the end point with target points in between
     """
     xy_init = nodes_list[-1]
     xy_end = nodes_list[-2]
@@ -872,13 +959,13 @@ def gen_precise_path(path, steps_list, nodes_list, area_list):
     precise_path = []
     for i in range(len(path)-1):
         if i == 0:
-            if complete_path[0] == path[0]: precise_path.append(list(xy_init)) #if first node is the actual init node
+            if complete_path[0] == path[0]: precise_path.append(list(xy_init)) #if first node is the actual init point
             else: 
                 first_nodes = init_to_trajectory(complete_path, nodes_list, steps_list)
                 for node in first_nodes:
                     precise_path.append(node)
         elif(i == (len(path) - 2)): 
-            if complete_path[-1] == path[-1]: precise_path.append(list(xy_end)) #if last node is the actual end node
+            if complete_path[-1] == path[-1]: precise_path.append(list(xy_end)) #if last node is the actual end point
             else: 
                 last_nodes = end_from_trajectory(complete_path, nodes_list, steps_list)
                 for node in last_nodes:
@@ -891,8 +978,13 @@ def gen_precise_path(path, steps_list, nodes_list, area_list):
 def trajectory_interpol(precise_path):
     """
     Interpolates the trajectory between each point in the list with the precise path trough quintic polynomials
-    Input: list with all the point coordinates that the car needs to travel to
-    Output: list with interpolated trajectory (x, y), list with interpolated orientations (theta)
+
+    Input: 
+        - precise_path: path from the initial point to the end point with target points in between
+
+    Output: 
+        - [trajectory_x, trajectory_y]: list with interpolated trajectory (x, y)
+        - orientation_list: list with interpolated orientations (theta)
     """
     trajectory_x = []
     trajectory_y = []
@@ -900,19 +992,19 @@ def trajectory_interpol(precise_path):
     orientation_list = []
 
     if(len(precise_path) <= 2):
-        sx = precise_path[0][0]  # start x position [m]
-        sy = precise_path[0][1]  # start y position [m]
-        syaw = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])  # start yaw angle [rad]
-        sv = (5/0.05073825503)*1000/3600  # start speed [m/s]
-        sa = 0  # start accel [m/ss]
-        gx = precise_path[1][0]  # goal x position [m]
-        gy = precise_path[1][1] # goal y position [m]
-        gyaw = syaw # goal yaw angle [rad]
-        gv = (0/0.05073825503)*1000/3600  # goal speed [m/s]
-        ga = 0  # goal accel [m/ss]
-        max_accel = 3.0/0.05073825503  # max accel [m/ss]
-        max_jerk = 0.5/0.05073825503  # max jerk [m/sss]
-        dt = 0.1   # time tick [s]
+        sx = precise_path[0][0]  #Initial x position [pixels]
+        sy = precise_path[0][1]  #Initial y position [pixels]
+        syaw = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])  #Initial yaw angle [rad]
+        sv = (5/0.05073825503)*1000/3600  #Initial velocity [pixels/s]
+        sa = 0  #Initial accel [pixels/ss]
+        gx = precise_path[1][0]  #goal x position [pixels]
+        gy = precise_path[1][1] #goal y position [pixels]
+        gyaw = syaw #goal yaw angle [rad]
+        gv = (0/0.05073825503)*1000/3600  #goal velocity [pixels/s]
+        ga = 0 #goal accel [m/ss]
+        max_accel = 3.0/0.05073825503  #max accel [pixels/ss]
+        max_jerk = 0.5/0.05073825503  #max jerk [pixels/sss]
+        dt = 0.1   #time tick [s]
         time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
         trajectory_x.append(x)
         trajectory_y.append(y)
@@ -920,24 +1012,22 @@ def trajectory_interpol(precise_path):
         velocity_list.append(v)
 
     else:
-
-        sa = 0.01/0.05073825503   # start accel [m/ss]
-        ga = 0.01/0.05073825503   # goal accel [m/ss]
-        max_accel = 0.5/0.05073825503  # max accel [m/ss]
-        max_jerk = 0.51/0.05073825503  # max jerk [m/sss]
-        dt = 0.1   # time tick [s]
+        sa = 0.01/0.05073825503   #Initial accel [pixels/ss]
+        ga = 0.01/0.05073825503   #goal accel [pixels/ss]
+        max_accel = 0.5/0.05073825503  #max accel [pixels/ss]
+        max_jerk = 0.51/0.05073825503  #max jerk [pixels/sss]
+        dt = 0.1   #time tick [s]
         
         for i in range(len(precise_path) - 1):
             if(i == (len(precise_path)-2)):
-                sx = trajectory_x[-1][-1]  # start x position [m]
-                sy = trajectory_y[-1][-1]   # start y position [m]
-                syaw = atan2(precise_path[i+1][1]-trajectory_y[-1][-1], precise_path[i+1][0]-trajectory_x[-1][-1])  # start yaw angle [rad]
-                syaw = orientation_list[-1][-1] # goal yaw angle [rad]
-                sv = (1/0.05073825503)*1000/3600  # start speed [m/s]
-                gx = precise_path[i+1][0]  # goal x position [m]
-                gy = precise_path[i+1][1] # goal y position [m]
-                gyaw = syaw  # goal yaw angle [rad]
-                gv = (0/0.05073825503)*1000/3600  # goal speed [m/s]
+                sx = trajectory_x[-1][-1]  #Initial x position [pixels]
+                sy = trajectory_y[-1][-1]   #Initial y position [pixels]
+                syaw = orientation_list[-1][-1] #goal yaw angle [rad]
+                sv = (1/0.05073825503)*1000/3600  #Initial velocity [pixels/s]
+                gx = precise_path[i+1][0]  #goal x position [pixels]
+                gy = precise_path[i+1][1] #goal y position [pixels]
+                gyaw = syaw  #goal yaw angle [rad]
+                gv = (0/0.05073825503)*1000/3600  #goal velocity [pixels/s]
 
                 time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
                 trajectory_x.append(x[:-1])
@@ -946,16 +1036,16 @@ def trajectory_interpol(precise_path):
                 velocity_list.append(v[:-1])
                 
             elif(i == 0):
-                sx = precise_path[0][0]  # start x position [m]
-                sy = precise_path[0][1]  # start y position [m]
-                syaw = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])  # start yaw angle [rad]
-                sv = 0  # start speed [m/s]
-                gx = precise_path[1][0]  # goal x position [m]
-                gy = precise_path[1][1] # goal y position [m] 
-                ang1 = atan2(precise_path[2][1]-precise_path[1][1], precise_path[2][0]-precise_path[1][0]) # angle between the current point and the target point
-                ang2 = atan2(precise_path[2-1][1]-precise_path[1-1][1], precise_path[2-1][0]-precise_path[1-1][0]) # angle between the next point and its' next point 
-                gyaw = atan2((sin(ang2) + sin(ang1)),(cos(ang1) + cos(ang2))) # goal yaw angle [rad]
-                gv = (1/0.05073825503)*1000/3600  # goal speed [m/s]
+                sx = precise_path[0][0]  #Initial x position [pixels]
+                sy = precise_path[0][1]  #Initial y position [pixels]
+                syaw = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])  #Initial yaw angle [rad]
+                sv = 0  #Initial velocity [pixels/s]
+                gx = precise_path[1][0]  #goal x position [pixels]
+                gy = precise_path[1][1] #goal y position [pixels] 
+                ang1 = atan2(precise_path[2][1]-precise_path[1][1], precise_path[2][0]-precise_path[1][0]) #angle between the current point and the target point
+                ang2 = atan2(precise_path[2-1][1]-precise_path[1-1][1], precise_path[2-1][0]-precise_path[1-1][0]) #angle between the next point and its' next point 
+                gyaw = atan2((sin(ang2) + sin(ang1)),(cos(ang1) + cos(ang2))) #goal yaw angle [rad]
+                gv = (1/0.05073825503)*1000/3600  #goal velocity [pixels/s]
                 
                 time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
                 trajectory_x.append(x[:-1])
@@ -964,16 +1054,16 @@ def trajectory_interpol(precise_path):
                 velocity_list.append(v[:-1])
 
             else:
-                sx = trajectory_x[-1][-1]  # start x position [m]
-                sy = trajectory_y[-1][-1]   # start y position [m]
-                syaw = orientation_list[-1][-1] # start yaw angle [rad]
-                sv = velocity_list[-1][-1]  # start speed [m/s] 
-                gx = precise_path[i+1][0]  # goal x position [m]
-                gy = precise_path[i+1][1] # goal y position [m]
-                ang1 = atan2(precise_path[i+2][1]-precise_path[i+1][1], precise_path[i+2][0]-precise_path[i+1][0]) # angle between the current point and the target point
-                ang2 = atan2(precise_path[i-1+2][1]-precise_path[i-1+1][1], precise_path[i-1+2][0]-precise_path[i-1+1][0]) # angle between the next point and its' next point 
-                gyaw = atan2((sin(ang2) + sin(ang1)),(cos(ang1) + cos(ang2))) # goal yaw angle [rad]
-                gv = (1/0.05073825503)*1000/3600  # goal speed [m/s]
+                sx = trajectory_x[-1][-1]  #Initial x position [pixels]
+                sy = trajectory_y[-1][-1]   #Initial y position [pixels]
+                syaw = orientation_list[-1][-1] #Initial yaw angle [rad]
+                sv = velocity_list[-1][-1]  #Initial velocity [pixels/s] 
+                gx = precise_path[i+1][0]  #goal x position [pixels]
+                gy = precise_path[i+1][1] #goal y position [pixels]
+                ang1 = atan2(precise_path[i+2][1]-precise_path[i+1][1], precise_path[i+2][0]-precise_path[i+1][0]) #angle between the current point and the target point
+                ang2 = atan2(precise_path[i-1+2][1]-precise_path[i-1+1][1], precise_path[i-1+2][0]-precise_path[i-1+1][0]) #angle between the next point and its' next point 
+                gyaw = atan2((sin(ang2) + sin(ang1)),(cos(ang1) + cos(ang2))) #goal yaw angle [rad]
+                gv = (1/0.05073825503)*1000/3600  #goal velocity [pixels/s]
                 time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
                 trajectory_x.append(x[:-1])
                 trajectory_y.append(y[:-1])
@@ -985,112 +1075,124 @@ def trajectory_interpol(precise_path):
 
 
 ######################## MAIN ############################
-init_nodes_graph = read_nodes_dist_file()
-area_list = read_area_file()
-nodes_list = read_nodes_list()
-steps_list = read_small_steps_list()
+def get_trajectory(show_trajectory = False):
+    """
+    Asks the user to input the initial and final points on the map and generates a valid trajectory between them
 
-mapa_ist = plt.imread('resources/ist_map.png')
-only_street_mat = plt.imread("resources/ist_only_streets.png")
+    Input: 
+        - show_trajectory: show the plot of the trajectory
 
-#Class for Dijkstra
-g = Graph()
+    Output: 
+        - trajectory_points.csv: file with the position of each point in the trajectory and the orientation of the vehicle at each time step
+    """
+    init_nodes_graph = read_nodes_dist_file()
+    area_list = read_area_file()
+    nodes_list = read_nodes_list()
+    steps_list = read_small_steps_list()
 
-n_nodes = len(init_nodes_graph)
+    mapa_ist = plt.imread('resources/ist_map.png')
+    only_street_mat = plt.imread("resources/ist_only_streets.png")
 
-#Repeat if the user didn't chose valid initial and end points
-valid_points = False
-while(not valid_points):
-    nodes_graph = init_nodes_graph
+    #Class for the Dijkstra method
+    g = Graph()
 
-    manager = plt.get_current_fig_manager()
-    manager.window.showMaximized()
+    n_nodes = len(init_nodes_graph)
 
-    plt.imshow(mapa_ist)
-    
-    #Request the user for the initial and end points
-    inputs = plt.ginput(2, 0)
-    
-    x_init = int(round(inputs[0][0]))
-    y_init = int(round(inputs[0][1]))
-    x_end = int(round(inputs[1][0]))
-    y_end = int(round(inputs[1][1]))
-
-    plt.scatter([x_init, x_end], [y_init, y_end], c = "r", marker = "+")
-
-    #Verify if both chosen points are in a street
-    if(only_street_mat[y_init][x_init] == 1 or only_street_mat[y_end][x_end] == 1): #Note: only_street_mat is transposed
-        plt.close('all')
-        print("Invalid input (outside of valid street)!")
-        continue
-    
-    #Add the final node to the graph
-    nodes_graph, final_areas = add_node(x_end, y_end, nodes_graph, area_list)
-    if(final_areas == None): #Chosen point isn't in a drivable area
+    #Repeat if the user didn't chose valid initial and end points
+    valid_points = False
+    while(not valid_points):
         nodes_graph = init_nodes_graph
-        plt.close('all')
-        print("Invalid input (outside of valid area)!")
-        continue
-    
-    #Add the initial node to the graph
-    nodes_graph, aux = add_node(x_init, y_init, nodes_graph, area_list, final_areas, [x_end, y_end])
-    if(aux == None): #Chosen point isn't in a drivable area
-        nodes_graph = init_nodes_graph
-        plt.close('all')
-        print("Invalid input (outside of valid area)!")
-        continue
-    
-    plt.close('all')
-    valid_points = True
 
+        manager = plt.get_current_fig_manager()
+        manager.window.showMaximized()
 
-#Get the path by applying Dijkstra
-path = g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
-
-nodes_list.append((x_end, y_end))
-nodes_list.append((x_init, y_init))
-
-#Adds intermediate points between each node
-precise_path = gen_precise_path(path, steps_list, nodes_list, area_list)
-
-#Generates the trajectory from the precise path
-vetor_trajectories, orientation_list = trajectory_interpol(precise_path)
-
-xx = []
-yy = []
-orientation = []
-for i in vetor_trajectories[0][:]:
-    for j in i:
-        xx.append(int(j))
+        plt.imshow(mapa_ist)
         
-for i in vetor_trajectories[1][:]:
-    for j in i:
-        yy.append(int(j))
+        #Request the user for the initial and end points
+        inputs = plt.ginput(2, 0)
         
-for i in orientation_list[:]:
-    for j in i:
-        orientation.append(float(j))
+        x_init = int(round(inputs[0][0]))
+        y_init = int(round(inputs[0][1]))
+        x_end = int(round(inputs[1][0]))
+        y_end = int(round(inputs[1][1]))
 
-for i in range(len(xx)-1, -1, -1):
-    if(i%5 != 0):
-        del xx[i]
-        del yy[i]
-        del orientation[i]
+        plt.scatter([x_init, x_end], [y_init, y_end], c = "r", marker = "+")
 
-manager = plt.get_current_fig_manager()
-manager.window.showMaximized()
-plt.imshow(mapa_ist)
-plt.scatter(xx, yy, s = 8)
-plt.scatter([x_init, x_end], [y_init, y_end], s = 100, c = 'r', marker = '+')
-plt.savefig('trajectory.pdf', bbox_inches='tight')
-plt.show()
+        #Verify if both chosen points are in a street
+        if(only_street_mat[y_init][x_init] == 1 or only_street_mat[y_end][x_end] == 1): #Note: only_street_mat is transposed
+            plt.close('all')
+            print("Invalid input (outside of valid street)!")
+            continue
+        
+        #Add the final node to the graph
+        nodes_graph, final_areas = add_node(x_end, y_end, nodes_graph, area_list)
+        if(final_areas == None): #Chosen point isn't in a drivable area
+            nodes_graph = init_nodes_graph
+            plt.close('all')
+            print("Invalid input (outside of valid area)!")
+            continue
+        
+        #Add the initial point to the graph
+        nodes_graph, aux = add_node(x_init, y_init, nodes_graph, area_list, final_areas, [x_end, y_end])
+        if(aux == None): #Chosen point isn't in a drivable area
+            nodes_graph = init_nodes_graph
+            plt.close('all')
+            print("Invalid input (outside of valid area)!")
+            continue
+        
+        plt.close('all')
+        valid_points = True
 
-#Save the trajectory to a new file
-fout = open('trajectory_points.csv', 'w', newline='')
-writer = csv.writer(fout)
-for i in range(1,len(xx)):
-    if(i == (len(xx)-1)):
-        writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
-    else:
-        writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
-fout.close()
+
+    #Get the path by applying Dijkstra
+    path = g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
+
+    nodes_list.append((x_end, y_end))
+    nodes_list.append((x_init, y_init))
+
+    #Adds intermediate points between each node
+    precise_path = gen_precise_path(path, steps_list, nodes_list, area_list)
+
+    #Generates the trajectory from the precise path
+    vetor_trajectories, orientation_list = trajectory_interpol(precise_path)
+
+    xx = []
+    yy = []
+    orientation = []
+    for i in vetor_trajectories[0][:]:
+        for j in i:
+            xx.append(int(j))
+            
+    for i in vetor_trajectories[1][:]:
+        for j in i:
+            yy.append(int(j))
+            
+    for i in orientation_list[:]:
+        for j in i:
+            orientation.append(float(j))
+
+    for i in range(len(xx)-1, -1, -1):
+        if(i%5 != 0):
+            del xx[i]
+            del yy[i]
+            del orientation[i]
+
+    #Uncomment to show trajectory plot
+    if(show_trajectory == True):
+        manager = plt.get_current_fig_manager()
+        manager.window.showMaximized()
+        plt.imshow(mapa_ist)
+        plt.scatter(xx, yy, s = 8)
+        plt.scatter([x_init, x_end], [y_init, y_end], c = 'r', marker = '+')
+        plt.savefig('trajectory.pdf', bbox_inches='tight')
+        plt.show()
+
+    #Save the trajectory to a new file
+    fout = open('trajectory_points.csv', 'w', newline='')
+    writer = csv.writer(fout)
+    for i in range(1,len(xx)):
+        if(i == (len(xx)-1)):
+            writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
+        else:
+            writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
+    fout.close()
