@@ -1064,7 +1064,7 @@ nodes_list.append((x_init, y_init))
 
 precise_path = gen_precise_path(path, steps_list, nodes_list, area_list)
 
-vetor_trajectories, orientation_list = trajectory_interpol(precise_path, nodes_list)
+vetor_trajectories, orientation_list = trajectory_interpol(precise_path)
 xx = []
 yy = []
 orientation = []
