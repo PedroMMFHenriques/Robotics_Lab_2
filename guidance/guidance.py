@@ -7,17 +7,18 @@ from math import *
 from scipy.interpolate import *
 
 class Graph:
- 
-    # A utility function to find the
-    # vertex with minimum dist value, from
-    # the set of vertices still in queue
+
     def minDistance(self,dist,queue):
-        # Initialize min value and min_index as -1
+        """
+        A utility function to find the vertex with minimum dist value, from the set of vertices still in queue
+        Input:
+        Output:
+        """
+        #Initialize min value and min_index as -1
         minimum = float("Inf")
         min_index = -1
          
-        # from the dist array,pick one which
-        # has min value and is till in queue
+        #From the dist array, pick one which has min value and is still in queue
         for i in range(len(dist)):
             if dist[i] < minimum and i in queue:
                 minimum = dist[i]
@@ -31,27 +32,21 @@ class Graph:
     def printPath(self, parent, j, path):
         #Base Case : If j is source
         if parent[j] == -1 :
-            print(j)
+            #print(j)
             path.append(j)
             return
 
         path.append(j)
         self.printPath(parent , parent[j], path)
         
-        print (j)
+        #print (j)
         return(path)
  
     # A utility function to print
     # the constructed distance
     # array
-    """def printSolution(self, dist, parent):
-        src = 0
-        print("Vertex \t\tDistance from Source\tPath")
-        for i in range(1, len(dist)):
-            print("\n%d --> %d \t\t%d \t\t\t\t\t" % (src, i, dist[i])),
-            self.printPath(parent,i)"""
     def printSolution(self, dist, parent, origin, dest):
-        print("Origin: %d\n Destination: %d\nDistance: %d\nPath: " % (origin, dest, dist[dest])) #apagar?
+        #print("Origin: %d\n Destination: %d\nDistance: %d\nPath: " % (origin, dest, dist[dest]))
         path = []
         path = self.printPath(parent,dest, path)
         
@@ -109,11 +104,220 @@ class Graph:
                     if dist[u] + graph[u][i] < dist[i]:
                         dist[i] = dist[u] + graph[u][i]
                         parent[i] = u
- 
- 
-        # print the constructed distance array
-
         return(self.printSolution(dist, parent, src, dest))
+
+
+MAX_T = 100.0  # maximum time to the goal [s]
+MIN_T = 3.0  # minimum time to the goal[s]
+show_animation = False
+
+class QuinticPolynomial:
+
+    def __init__(self, xs, vxs, axs, xe, vxe, axe, time):
+        # calc coefficient of quintic polynomial
+        self.a0 = xs
+        self.a1 = vxs
+        self.a2 = axs / 2.0
+
+        A = np.array([[time ** 3, time ** 4, time ** 5],
+                      [3 * time ** 2, 4 * time ** 3, 5 * time ** 4],
+                      [6 * time, 12 * time ** 2, 20 * time ** 3]])
+        b = np.array([xe - self.a0 - self.a1 * time - self.a2 * time ** 2,
+                      vxe - self.a1 - 2 * self.a2 * time,
+                      axe - 2 * self.a2])
+        x = np.linalg.solve(A, b)
+
+        self.a3 = x[0]
+        self.a4 = x[1]
+        self.a5 = x[2]
+
+    def calc_point(self, t):
+        xt = self.a0 + self.a1 * t + self.a2 * t ** 2 + \
+             self.a3 * t ** 3 + self.a4 * t ** 4 + self.a5 * t ** 5
+
+        return xt
+
+    def calc_first_derivative(self, t):
+        xt = self.a1 + 2 * self.a2 * t + \
+             3 * self.a3 * t ** 2 + 4 * self.a4 * t ** 3 + 5 * self.a5 * t ** 4
+
+        return xt
+
+    def calc_second_derivative(self, t):
+        xt = 2 * self.a2 + 6 * self.a3 * t + 12 * self.a4 * t ** 2 + 20 * self.a5 * t ** 3
+
+        return xt
+
+    def calc_third_derivative(self, t):
+        xt = 6 * self.a3 + 24 * self.a4 * t + 60 * self.a5 * t ** 2
+
+        return xt
+
+
+def quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt):
+    """
+    quintic polynomial planner
+    input
+        s_x: start x position [m]
+        s_y: start y position [m]
+        s_yaw: start yaw angle [rad]
+        sa: start accel [m/ss]
+        gx: goal x position [m]
+        gy: goal y position [m]
+        gyaw: goal yaw angle [rad]
+        ga: goal accel [m/ss]
+        max_accel: maximum accel [m/ss]
+        max_jerk: maximum jerk [m/sss]
+        dt: time tick [s]
+    return
+        time: time result
+        rx: x position result list
+        ry: y position result list
+        ryaw: yaw angle result list
+        rv: velocity result list
+        ra: accel result list
+    """
+
+    vxs = sv * cos(syaw)
+    vys = sv * sin(syaw)
+    vxg = gv * cos(gyaw)
+    vyg = gv * sin(gyaw)
+
+    axs = sa * cos(syaw)
+    ays = sa * sin(syaw)
+    axg = ga * cos(gyaw)
+    ayg = ga * sin(gyaw)
+
+    time, rx, ry, ryaw, rv, ra, rj = [], [], [], [], [], [], []
+
+    for T in np.arange(MIN_T, MAX_T, MIN_T):
+        xqp = QuinticPolynomial(sx, vxs, axs, gx, vxg, axg, T)
+        yqp = QuinticPolynomial(sy, vys, ays, gy, vyg, ayg, T)
+
+        time, rx, ry, ryaw, rv, ra, rj = [], [], [], [], [], [], []
+
+        for t in np.arange(0.0, T + dt, dt):
+            time.append(t)
+            rx.append(xqp.calc_point(t))
+            ry.append(yqp.calc_point(t))
+
+            vx = xqp.calc_first_derivative(t)
+            vy = yqp.calc_first_derivative(t)
+            v = np.hypot(vx, vy)
+
+            yaw = atan2(vy, vx)
+            rv.append(v)
+            ryaw.append(yaw)
+
+            ax = xqp.calc_second_derivative(t)
+            ay = yqp.calc_second_derivative(t)
+            a = np.hypot(ax, ay)
+            if len(rv) >= 2 and rv[-1] - rv[-2] < 0.0:
+                a *= -1
+            ra.append(a)
+
+            jx = xqp.calc_third_derivative(t)
+            jy = yqp.calc_third_derivative(t)
+            j = np.hypot(jx, jy)
+            if len(ra) >= 2 and ra[-1] - ra[-2] < 0.0:
+                j *= -1
+            rj.append(j)
+
+        if max([abs(i) for i in ra]) <= max_accel and max([abs(i) for i in rj]) <= max_jerk:
+            break
+
+    return time, rx, ry, ryaw, rv, ra, rj
+
+def read_nodes_dist_file():
+    """
+    Reads file with the distances between each adjacent node and turns the data into a list
+    Output: List of the distances between each adjacent node
+    """
+    file1 = open('resources/path_nodes_dist.csv')
+    type(file1)
+
+    csvreader = csv.reader(file1)
+
+    header = []
+    header = next(csvreader)
+
+    nodes_graph = []
+    for row in csvreader:
+        for i in range(len(row)):
+            row[i] = float(row[i])
+        nodes_graph.append(row)
+    return nodes_graph
+
+def read_nodes_list():
+    """
+    Reads file with the position of each node and turns the data into a list
+    Output: List of the position of each node
+    """
+
+    file = open('resources/path_nodes_positions.csv')
+    type(file)
+
+    csvreader = csv.reader(file)
+
+    header = []
+    header = next(csvreader)
+
+    nodes_list = []
+    for row in csvreader:
+        for i in range(len(row)):
+            row[i] = int(row[i])
+        nodes_list.append(row)
+    return nodes_list
+
+
+def read_area_file():
+    """
+    Reads file with the corner positions of the (rectangular) drivable areas and turns the data into a list
+    Output: List of the corner positions of the (rectangular) drivable areas
+    """
+    file = open("resources/rectangles_position.csv")
+    type(file)
+
+    csvreader = csv.reader(file)
+
+    header = []
+    header = next(csvreader)
+
+    area_list = []
+    for row in csvreader:
+        for i in range(len(row)):
+            if(i != 0): row[i] = int(row[i])
+        area_list.append(row)
+    return area_list
+
+
+def read_small_steps_list():
+    """
+    Reads file with the position of each step (intermediate targets between 2 nodes) and turns the data into a list
+    Output: List of the position of each step
+    """
+    file = open('resources/small_steps.csv')
+    type(file)
+
+    csvreader = csv.reader(file)
+    header = []
+    header = next(csvreader)
+
+    steps_list = []
+    for row in csvreader:
+        for i in range(len(row)):
+            
+            if(row[i] =='0'): row[i] = int(row[i])
+            else:  
+                aux = (row[i].split(";"))
+
+                for k in range(len(aux)):
+                    aux[k] = aux[k].split(" ")
+                    aux[k][0] = int(aux[k][0])
+                    aux[k][1] = int(aux[k][1])
+                row[i] = aux 
+        steps_list.append(row)
+    return steps_list
 
 def calc_dist(x1,y1,x2,y2):
     """
@@ -387,326 +591,6 @@ def add_node(x,y, node_graph, area_list, final_areas=None, xy_final=None):
 
     return node_graph, areas
 
-
-
-def read_nodes_dist_file():
-    """
-    Reads file with the distances between each adjacent node and turns the data into a list
-    Output: List of the distances between each adjacent node
-    """
-    file1 = open('resources/path_nodes_dist.csv')
-    type(file1)
-
-    csvreader = csv.reader(file1)
-
-    header = []
-    header = next(csvreader)
-
-    nodes_graph = []
-    for row in csvreader:
-        for i in range(len(row)):
-            row[i] = float(row[i])
-        nodes_graph.append(row)
-    return nodes_graph
-
-def read_nodes_list():
-    """
-    Reads file with the position of each node and turns the data into a list
-    Output: List of the position of each node
-    """
-
-    file = open('resources/path_nodes_positions.csv')
-    type(file)
-
-    csvreader = csv.reader(file)
-
-    header = []
-    header = next(csvreader)
-
-    nodes_list = []
-    for row in csvreader:
-        for i in range(len(row)):
-            row[i] = int(row[i])
-        nodes_list.append(row)
-    return nodes_list
-
-
-def read_area_file():
-    """
-    Reads file with the corner positions of the (rectangular) drivable areas and turns the data into a list
-    Output: List of the corner positions of the (rectangular) drivable areas
-    """
-    file = open("resources/rectangles_position.csv")
-    type(file)
-
-    csvreader = csv.reader(file)
-
-    header = []
-    header = next(csvreader)
-
-    area_list = []
-    for row in csvreader:
-        for i in range(len(row)):
-            if(i != 0): row[i] = int(row[i])
-        area_list.append(row)
-    return area_list
-
-
-def read_small_steps_list():
-    """
-    Reads file with the position of each step ("mini" nodes between 2 nodes) and turns the data into a list
-    Output: List of the position of each step
-    """
-    file = open('resources/small_steps.csv')
-    type(file)
-
-    csvreader = csv.reader(file)
-    header = []
-    header = next(csvreader)
-
-    steps_list = []
-    for row in csvreader:
-        for i in range(len(row)):
-            
-            if(row[i] =='0'): row[i] = int(row[i])
-            else:  
-                aux = (row[i].split(";"))
-
-                for k in range(len(aux)):
-                    aux[k] = aux[k].split(" ")
-                    aux[k][0] = int(aux[k][0])
-                    aux[k][1] = int(aux[k][1])
-                row[i] = aux 
-        steps_list.append(row)
-    return steps_list
-
-
-def trajectory_interpol(precise_path):
-    """
-    Interpolates the trajectory between each point in the list with the precise path trough quintic polynomials
-
-    Input: list with all the point coordinates that the car needs to travel to
-    Output: list with interpolated trajectory (x, y), list with interpolated orientations (theta)
-    """
-    time_list = []
-    trajectory_x = []
-    trajectory_y = []
-    velocity_list = []
-    orientation_list = []
-
-    if(len(precise_path) <= 2):
-
-        sx = precise_path[0][0]  # start x position [m]
-        sy = precise_path[0][1]  # start y position [m]
-        syaw = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])  # start yaw angle [rad]
-        sv = (5/0.05073825503)*1000/3600  # start speed [m/s]
-        sa = 0  # start accel [m/ss]
-        gx = precise_path[1][0]  # goal x position [m]
-        gy = precise_path[1][1] # goal y position [m]
-        gyaw = syaw # goal yaw angle [rad]
-        gv = (0/0.05073825503)*1000/3600  # goal speed [m/s]
-        ga = 0  # goal accel [m/ss]
-        max_accel = 3.0/0.05073825503  # max accel [m/ss]
-        max_jerk = 0.5/0.05073825503  # max jerk [m/sss]
-        dt = 0.1   # time tick [s]
-        time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
-        time_list.append(time)
-        trajectory_x.append(x)
-        trajectory_y.append(y)
-        orientation_list.append(yaw)    
-        velocity_list.append(v)
-    else:
-
-        sa = 0.01/0.05073825503   # start accel [m/ss]
-        ga = 0.01/0.05073825503   # goal accel [m/ss]
-        max_accel = 0.5/0.05073825503  # max accel [m/ss]
-        max_jerk = 0.51/0.05073825503  # max jerk [m/sss]
-        dt = 0.1   # time tick [s]
-
-        
-        for i in range(len(precise_path) - 1):
-            if(i == (len(precise_path)-2)):
-                sx = trajectory_x[-1][-1]  # start x position [m]
-                sy = trajectory_y[-1][-1]   # start y position [m]
-                syaw = atan2(precise_path[i+1][1]-trajectory_y[-1][-1], precise_path[i+1][0]-trajectory_x[-1][-1])  # start yaw angle [rad]
-                syaw = orientation_list[-1][-1] # goal yaw angle [rad]
-                sv = (1/0.05073825503)*1000/3600  # start speed [m/s]
-                gx = precise_path[i+1][0]  # goal x position [m]
-                gy = precise_path[i+1][1] # goal y position [m]
-                gyaw = syaw  # goal yaw angle [rad]
-                gv = (0/0.05073825503)*1000/3600  # goal speed [m/s]
-
-                time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
-                trajectory_x.append(x[:-1])
-                trajectory_y.append(y[:-1])
-                orientation_list.append(yaw[:-1])  
-                velocity_list.append(v[:-1])
-            elif(i == 0):
-                sx = precise_path[0][0]  # start x position [m]
-                sy = precise_path[0][1]  # start y position [m]
-                syaw = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])  # start yaw angle [rad]
-                sv = 0  # start speed [m/s]
-                gx = precise_path[1][0]  # goal x position [m]
-                gy = precise_path[1][1] # goal y position [m] 
-                ang1 = atan2(precise_path[2][1]-precise_path[1][1], precise_path[2][0]-precise_path[1][0]) # angle between the current point and the target point
-                ang2 = atan2(precise_path[2-1][1]-precise_path[1-1][1], precise_path[2-1][0]-precise_path[1-1][0]) # angle between the next point and its' next point 
-                gyaw = atan2((sin(ang2) + sin(ang1)),(cos(ang1) + cos(ang2))) # goal yaw angle [rad]
-                gv = (1/0.05073825503)*1000/3600  # goal speed [m/s]
-                
-                time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
-                trajectory_x.append(x[:-1])
-                trajectory_y.append(y[:-1])
-                orientation_list.append(yaw[:-1])  
-                velocity_list.append(v[:-1])
-
-            #else:
-
-            else:
-                sx = trajectory_x[-1][-1]  # start x position [m]
-                sy = trajectory_y[-1][-1]   # start y position [m]
-                syaw = orientation_list[-1][-1] # start yaw angle [rad]
-                sv = velocity_list[-1][-1]  # start speed [m/s] 
-                gx = precise_path[i+1][0]  # goal x position [m]
-                gy = precise_path[i+1][1] # goal y position [m]
-                ang1 = atan2(precise_path[i+2][1]-precise_path[i+1][1], precise_path[i+2][0]-precise_path[i+1][0]) # angle between the current point and the target point
-                ang2 = atan2(precise_path[i-1+2][1]-precise_path[i-1+1][1], precise_path[i-1+2][0]-precise_path[i-1+1][0]) # angle between the next point and its' next point 
-                gyaw = atan2((sin(ang2) + sin(ang1)),(cos(ang1) + cos(ang2))) # goal yaw angle [rad]
-                gv = (1/0.05073825503)*1000/3600  # goal speed [m/s]
-                time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
-                trajectory_x.append(x[:-1])
-                trajectory_y.append(y[:-1])
-                orientation_list.append(yaw[:-1])  
-                velocity_list.append(v[:-1])
-                
-    return [trajectory_x, trajectory_y], orientation_list
-
-
-
-MAX_T = 100.0  # maximum time to the goal [s]
-MIN_T = 3.0  # minimum time to the goal[s]
-show_animation = False
-
-
-
-
-class QuinticPolynomial:
-
-    def __init__(self, xs, vxs, axs, xe, vxe, axe, time):
-        # calc coefficient of quintic polynomial
-        self.a0 = xs
-        self.a1 = vxs
-        self.a2 = axs / 2.0
-
-        A = np.array([[time ** 3, time ** 4, time ** 5],
-                      [3 * time ** 2, 4 * time ** 3, 5 * time ** 4],
-                      [6 * time, 12 * time ** 2, 20 * time ** 3]])
-        b = np.array([xe - self.a0 - self.a1 * time - self.a2 * time ** 2,
-                      vxe - self.a1 - 2 * self.a2 * time,
-                      axe - 2 * self.a2])
-        x = np.linalg.solve(A, b)
-
-        self.a3 = x[0]
-        self.a4 = x[1]
-        self.a5 = x[2]
-
-    def calc_point(self, t):
-        xt = self.a0 + self.a1 * t + self.a2 * t ** 2 + \
-             self.a3 * t ** 3 + self.a4 * t ** 4 + self.a5 * t ** 5
-
-        return xt
-
-    def calc_first_derivative(self, t):
-        xt = self.a1 + 2 * self.a2 * t + \
-             3 * self.a3 * t ** 2 + 4 * self.a4 * t ** 3 + 5 * self.a5 * t ** 4
-
-        return xt
-
-    def calc_second_derivative(self, t):
-        xt = 2 * self.a2 + 6 * self.a3 * t + 12 * self.a4 * t ** 2 + 20 * self.a5 * t ** 3
-
-        return xt
-
-    def calc_third_derivative(self, t):
-        xt = 6 * self.a3 + 24 * self.a4 * t + 60 * self.a5 * t ** 2
-
-        return xt
-
-
-def quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt):
-    """
-    quintic polynomial planner
-    input
-        s_x: start x position [m]
-        s_y: start y position [m]
-        s_yaw: start yaw angle [rad]
-        sa: start accel [m/ss]
-        gx: goal x position [m]
-        gy: goal y position [m]
-        gyaw: goal yaw angle [rad]
-        ga: goal accel [m/ss]
-        max_accel: maximum accel [m/ss]
-        max_jerk: maximum jerk [m/sss]
-        dt: time tick [s]
-    return
-        time: time result
-        rx: x position result list
-        ry: y position result list
-        ryaw: yaw angle result list
-        rv: velocity result list
-        ra: accel result list
-    """
-
-    vxs = sv * cos(syaw)
-    vys = sv * sin(syaw)
-    vxg = gv * cos(gyaw)
-    vyg = gv * sin(gyaw)
-
-    axs = sa * cos(syaw)
-    ays = sa * sin(syaw)
-    axg = ga * cos(gyaw)
-    ayg = ga * sin(gyaw)
-
-    time, rx, ry, ryaw, rv, ra, rj = [], [], [], [], [], [], []
-
-    for T in np.arange(MIN_T, MAX_T, MIN_T):
-        xqp = QuinticPolynomial(sx, vxs, axs, gx, vxg, axg, T)
-        yqp = QuinticPolynomial(sy, vys, ays, gy, vyg, ayg, T)
-
-        time, rx, ry, ryaw, rv, ra, rj = [], [], [], [], [], [], []
-
-        for t in np.arange(0.0, T + dt, dt):
-            time.append(t)
-            rx.append(xqp.calc_point(t))
-            ry.append(yqp.calc_point(t))
-
-            vx = xqp.calc_first_derivative(t)
-            vy = yqp.calc_first_derivative(t)
-            v = np.hypot(vx, vy)
-
-            yaw = atan2(vy, vx)
-            rv.append(v)
-            ryaw.append(yaw)
-
-            ax = xqp.calc_second_derivative(t)
-            ay = yqp.calc_second_derivative(t)
-            a = np.hypot(ax, ay)
-            if len(rv) >= 2 and rv[-1] - rv[-2] < 0.0:
-                a *= -1
-            ra.append(a)
-
-            jx = xqp.calc_third_derivative(t)
-            jy = yqp.calc_third_derivative(t)
-            j = np.hypot(jx, jy)
-            if len(ra) >= 2 and ra[-1] - ra[-2] < 0.0:
-                j *= -1
-            rj.append(j)
-
-        if max([abs(i) for i in ra]) <= max_accel and max([abs(i) for i in rj]) <= max_jerk:
-            break
-
-    return time, rx, ry, ryaw, rv, ra, rj
-
-
 def add_prev_and_next_node(path, xy_init, xy_end, area_list):
     """
     Find in which edge the chosen initial and end points are by determining which node came before or after, respectively, adding them to the path
@@ -912,8 +796,8 @@ def add_prev_and_next_node(path, xy_init, xy_end, area_list):
 
 def init_to_trajectory(complete_path, nodes_list, steps_list):
     """
-    Find the "mini" nodes (steps) that lead from the chosen initial point to the first node by comparing the distances to it
-    Input: Extended path (with the node previous from the initial point); list with the position of each node; list with the position of each step ("mini" nodes between 2 nodes) 
+    Find the intermediate targets (steps) that lead from the chosen initial point to the first node by comparing the distances to it
+    Input: Extended path (with the node previous from the initial point); list with the position of each node; list with the position of each step (intermediate targets between 2 nodes) 
     Output: Path from the initial point to the first node
     """
     #Node before the intial point chosen
@@ -943,8 +827,8 @@ def init_to_trajectory(complete_path, nodes_list, steps_list):
 
 def end_from_trajectory(complete_path, nodes_list, steps_list):
     """
-    Find the "mini" nodes (steps) that lead from the last node to the chosen end point by comparing the distances to it
-    Input: Extended path (with the node after the end point); list with the position of each node; list with the position of each step ("mini" nodes between 2 nodes) 
+    Find the intermediate targets (steps) that lead from the last node to the chosen end point by comparing the distances to it
+    Input: Extended path (with the node after the end point); list with the position of each node; list with the position of each step (intermediate targets between 2 nodes) 
     Output: Path from the final node to the end point
     """
     #Node after the end point chosen
@@ -972,10 +856,10 @@ def end_from_trajectory(complete_path, nodes_list, steps_list):
     end_from_last_node.append([end_point[0], end_point[1]])
     return end_from_last_node
 
-def gen_precise_path(path, steps_list, nodes_list, area_list): #rever esta |
+def gen_precise_path(path, steps_list, nodes_list, area_list):
     """
     Receives the path calculated by the Djikstra algorithm and improves it by adding intermediate targets between each node
-    Input: Path (calculated by Djikstra); list with the position of each step ("mini" nodes between 2 nodes); list with the coordinates of key regions of the IST Campus map 
+    Input: Path (calculated by Djikstra); list with the position of each step (intermediate targets between 2 nodes); list of drivable areas;
     Output: Precise path from the initial node to the end point
     """
     xy_init = nodes_list[-1]
@@ -1004,28 +888,130 @@ def gen_precise_path(path, steps_list, nodes_list, area_list): #rever esta |
                 precise_path.append([steps_list[path[i]][path[i+1]][k][0], steps_list[path[i]][path[i+1]][k][1]])
     return precise_path
 
+def trajectory_interpol(precise_path):
+    """
+    Interpolates the trajectory between each point in the list with the precise path trough quintic polynomials
+
+    Input: list with all the point coordinates that the car needs to travel to
+    Output: list with interpolated trajectory (x, y), list with interpolated orientations (theta)
+    """
+    time_list = []
+    trajectory_x = []
+    trajectory_y = []
+    velocity_list = []
+    orientation_list = []
+
+    if(len(precise_path) <= 2):
+        sx = precise_path[0][0]  # start x position [m]
+        sy = precise_path[0][1]  # start y position [m]
+        syaw = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])  # start yaw angle [rad]
+        sv = (5/0.05073825503)*1000/3600  # start speed [m/s]
+        sa = 0  # start accel [m/ss]
+        gx = precise_path[1][0]  # goal x position [m]
+        gy = precise_path[1][1] # goal y position [m]
+        gyaw = syaw # goal yaw angle [rad]
+        gv = (0/0.05073825503)*1000/3600  # goal speed [m/s]
+        ga = 0  # goal accel [m/ss]
+        max_accel = 3.0/0.05073825503  # max accel [m/ss]
+        max_jerk = 0.5/0.05073825503  # max jerk [m/sss]
+        dt = 0.1   # time tick [s]
+        time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
+        time_list.append(time)
+        trajectory_x.append(x)
+        trajectory_y.append(y)
+        orientation_list.append(yaw)    
+        velocity_list.append(v)
+    else:
+
+        sa = 0.01/0.05073825503   # start accel [m/ss]
+        ga = 0.01/0.05073825503   # goal accel [m/ss]
+        max_accel = 0.5/0.05073825503  # max accel [m/ss]
+        max_jerk = 0.51/0.05073825503  # max jerk [m/sss]
+        dt = 0.1   # time tick [s]
+
+        
+        for i in range(len(precise_path) - 1):
+            if(i == (len(precise_path)-2)):
+                sx = trajectory_x[-1][-1]  # start x position [m]
+                sy = trajectory_y[-1][-1]   # start y position [m]
+                syaw = atan2(precise_path[i+1][1]-trajectory_y[-1][-1], precise_path[i+1][0]-trajectory_x[-1][-1])  # start yaw angle [rad]
+                syaw = orientation_list[-1][-1] # goal yaw angle [rad]
+                sv = (1/0.05073825503)*1000/3600  # start speed [m/s]
+                gx = precise_path[i+1][0]  # goal x position [m]
+                gy = precise_path[i+1][1] # goal y position [m]
+                gyaw = syaw  # goal yaw angle [rad]
+                gv = (0/0.05073825503)*1000/3600  # goal speed [m/s]
+
+                time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
+                trajectory_x.append(x[:-1])
+                trajectory_y.append(y[:-1])
+                orientation_list.append(yaw[:-1])  
+                velocity_list.append(v[:-1])
+            elif(i == 0):
+                sx = precise_path[0][0]  # start x position [m]
+                sy = precise_path[0][1]  # start y position [m]
+                syaw = atan2(precise_path[1][1]-precise_path[0][1], precise_path[1][0]-precise_path[0][0])  # start yaw angle [rad]
+                sv = 0  # start speed [m/s]
+                gx = precise_path[1][0]  # goal x position [m]
+                gy = precise_path[1][1] # goal y position [m] 
+                ang1 = atan2(precise_path[2][1]-precise_path[1][1], precise_path[2][0]-precise_path[1][0]) # angle between the current point and the target point
+                ang2 = atan2(precise_path[2-1][1]-precise_path[1-1][1], precise_path[2-1][0]-precise_path[1-1][0]) # angle between the next point and its' next point 
+                gyaw = atan2((sin(ang2) + sin(ang1)),(cos(ang1) + cos(ang2))) # goal yaw angle [rad]
+                gv = (1/0.05073825503)*1000/3600  # goal speed [m/s]
+                
+                time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
+                trajectory_x.append(x[:-1])
+                trajectory_y.append(y[:-1])
+                orientation_list.append(yaw[:-1])  
+                velocity_list.append(v[:-1])
+
+            else:
+                sx = trajectory_x[-1][-1]  # start x position [m]
+                sy = trajectory_y[-1][-1]   # start y position [m]
+                syaw = orientation_list[-1][-1] # start yaw angle [rad]
+                sv = velocity_list[-1][-1]  # start speed [m/s] 
+                gx = precise_path[i+1][0]  # goal x position [m]
+                gy = precise_path[i+1][1] # goal y position [m]
+                ang1 = atan2(precise_path[i+2][1]-precise_path[i+1][1], precise_path[i+2][0]-precise_path[i+1][0]) # angle between the current point and the target point
+                ang2 = atan2(precise_path[i-1+2][1]-precise_path[i-1+1][1], precise_path[i-1+2][0]-precise_path[i-1+1][0]) # angle between the next point and its' next point 
+                gyaw = atan2((sin(ang2) + sin(ang1)),(cos(ang1) + cos(ang2))) # goal yaw angle [rad]
+                gv = (1/0.05073825503)*1000/3600  # goal speed [m/s]
+                time, x, y, yaw, v, a, j = quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_accel, max_jerk, dt)
+                trajectory_x.append(x[:-1])
+                trajectory_y.append(y[:-1])
+                orientation_list.append(yaw[:-1])  
+                velocity_list.append(v[:-1])
+                
+    return [trajectory_x, trajectory_y], orientation_list
+
+
 
 ######################## MAIN ############################
-nodes_graph = read_nodes_dist_file()
+init_nodes_graph = read_nodes_dist_file()
 area_list = read_area_file()
 nodes_list = read_nodes_list()
 steps_list = read_small_steps_list()
 
-# Driver program
+mapa_ist = plt.imread('resources/ist_map.png')
+only_street_mat = plt.imread("resources/ist_only_streets.png")
+
+#Class for Dijkstra
 g = Graph()
-#g.graph = graph
 
-n_nodes = len(nodes_graph)
+n_nodes = len(init_nodes_graph)
+
+#Repeat if the user didn't chose valid initial and end points
 valid_points = False
-
 while(not valid_points):
-    mapa_ist = plt.imread('resources/ist_map.png')
+    nodes_graph = init_nodes_graph
+
     manager = plt.get_current_fig_manager()
     manager.window.showMaximized()
 
     plt.imshow(mapa_ist)
     
-    inputs = plt.ginput(2)
+    #Request the user for the initial and end points
+    inputs = plt.ginput(2, 0)
     
     x_init = int(round(inputs[0][0]))
     y_init = int(round(inputs[0][1]))
@@ -1034,37 +1020,44 @@ while(not valid_points):
 
     plt.scatter([x_init, x_end], [y_init, y_end], c = "r", marker = "+")
 
-    only_street_mat = plt.imread("resources/ist_only_streets.png")
-
-    #Note: only_street_mat is transposed
-    if(only_street_mat[y_init][x_init] == 1 or only_street_mat[y_end][x_end] == 1): 
-        plt.clf()
+    #Verify if both chosen points are in a street
+    if(only_street_mat[y_init][x_init] == 1 or only_street_mat[y_end][x_end] == 1): #Note: only_street_mat is transposed
+        plt.close('all')
         print("Invalid input (outside of valid street)!")
         continue
     
+    #Add the final node to the graph
     nodes_graph, final_areas = add_node(x_end, y_end, nodes_graph, area_list)
-    if(nodes_graph == None): 
-        plt.clf()
-        print("Invalid input (outside of valid area)!")
-        continue
-
-    nodes_graph, aux = add_node(x_init, y_init, nodes_graph, area_list, final_areas, [x_end, y_end])
-    if(nodes_graph == None):
-        nodes_graph = []
-        plt.clf()
+    if(final_areas == None): #Chosen point isn't in a drivable area
+        nodes_graph = init_nodes_graph
+        plt.close('all')
         print("Invalid input (outside of valid area)!")
         continue
     
+    #Add the initial node to the graph
+    nodes_graph, aux = add_node(x_init, y_init, nodes_graph, area_list, final_areas, [x_end, y_end])
+    if(aux == None): #Chosen point isn't in a drivable area
+        nodes_graph = init_nodes_graph
+        plt.close('all')
+        print("Invalid input (outside of valid area)!")
+        continue
+    
+    plt.close('all')
     valid_points = True
 
+print(nodes_graph)
+#Get the path by applying Dijkstra
 path = g.dijkstra(nodes_graph, n_nodes+1, n_nodes)
-
+print(path)
 nodes_list.append((x_end, y_end))
 nodes_list.append((x_init, y_init))
 
+#Adds intermediate points between each node
 precise_path = gen_precise_path(path, steps_list, nodes_list, area_list)
 
+#Generates the trajectory from the precise path
 vetor_trajectories, orientation_list = trajectory_interpol(precise_path)
+
 xx = []
 yy = []
 orientation = []
@@ -1086,16 +1079,14 @@ for i in range(len(xx), 0, -1):
         del yy[i]
         del orientation[i]
 
+manager = plt.get_current_fig_manager()
+manager.window.showMaximized()
 plt.imshow(mapa_ist)
-num = int(calc_dist(precise_path[0][0], precise_path[0][1], precise_path[1][0], precise_path[1][1])/20)
-
 plt.scatter(xx, yy, s = 10)
-
-
 plt.savefig('trajectory.pdf', bbox_inches='tight')
 plt.show()
 
-
+#Save the trajectory to a new file
 fout = open('trajectory_points.csv', 'w', newline='')
 writer = csv.writer(fout)
 for i in range(len(xx)):
@@ -1103,5 +1094,4 @@ for i in range(len(xx)):
         writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
     else:
         writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
-
 fout.close()
