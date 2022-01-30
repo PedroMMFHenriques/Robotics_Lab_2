@@ -1,0 +1,423 @@
+from time import sleep
+import pygame 
+import math
+import numpy as np
+from pygame.locals import *
+import csv
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+from control import read_csv_file, control_it
+
+
+def sensor(car_pos, car_direction, background):
+
+    s_colors = [[],[],[],[],[]]
+    sensor=[0,0,0,0,0]
+
+    hit = [0,0,0,0,0]
+
+    for i in range(0 , 100, 2):
+
+        s_colors[0] = background.get_at( (car_pos[0] + int(i * math.cos(car_direction - 90)) , car_pos[1] + int(i * math.cos(car_direction - 90)) ))
+        s_colors[1] = background.get_at( (car_pos[0] + int(i * math.cos(car_direction - 45)) , car_pos[1] + int(i * math.cos(car_direction - 45)) ))
+        s_colors[2] = background.get_at( (car_pos[0] + int(i * math.cos(car_direction     )) , car_pos[1] + int(i * math.cos(car_direction     )) ))
+        s_colors[3] = background.get_at( (car_pos[0] + int(i * math.cos(car_direction + 45)) , car_pos[1] + int(i * math.cos(car_direction + 45)) ))
+        s_colors[4] = background.get_at( (car_pos[0] + int(i * math.cos(car_direction + 90)) , car_pos[1] + int(i * math.cos(car_direction + 90)) ))
+
+        #print(i)
+
+        #print(s_colors)
+
+
+        for j in range(0, 5):
+            if s_colors[j] != (242, 243, 245,255) and hit[j] == 0:
+                sensor[j] = i
+                hit[j] = 1
+                #print(s_colors[j])
+                
+
+    return sensor
+
+def generate_motion(point_1, point_2):
+    """Function interpolates positions between 2 points"""
+
+    min_step = 2
+
+    positions = []
+    scaling = 0
+
+    x_signal = 1
+    y_signal = 1
+
+    x_p1 , y_p1 = point_1
+    x_p2 , y_p2 = point_2
+
+    delta_x = x_p2 - x_p1
+    delta_y = y_p2 - y_p1
+
+    steps_x = abs(delta_x // min_step)
+    steps_y = abs(delta_y // min_step)
+
+    if delta_x < 0:
+        x_signal = -1
+    
+    if delta_y < 0:
+        y_signal = -1
+
+
+    print(delta_x)
+    print(delta_y)
+
+
+    positions.append( point_1)
+
+    if abs(delta_x) > abs(delta_y) :
+
+        for i in range(1, steps_x):
+
+            angle = int(180 * -math.atan2((delta_y),(delta_x))/ math.pi)
+
+            positions.append((positions[i-1][0] + (min_step * x_signal) ,positions[i-1][1]+ (min_step*scaling * y_signal), angle))
+
+            if scaling == 1 :
+                scaling = 0
+            if i%(delta_x//delta_y) == 0:
+                scaling = 1
+                
+    
+    elif abs(delta_x) < abs(delta_y) :
+
+        for i in range(1, steps_y):
+            
+            angle = int(180 * -math.atan2((delta_y),(delta_x)) / math.pi)
+
+            positions.append((positions[i-1][0] + (min_step * scaling * x_signal) ,positions[i-1][1]+ (min_step * y_signal), angle))
+
+            if scaling == 1 :
+                scaling = 0
+            if i%(delta_y//delta_x) == 0:\
+                scaling = 1
+
+    elif abs(delta_x) == abs(delta_y) :
+
+        for i in range(0, steps_y):
+            angle = int(180 * math.atan2((delta_y),(delta_x)) / math.pi)
+
+            positions.append((positions[i-1][0] + (min_step * x_signal) ,positions[i-1][1]+ (min_step * y_signal), angle))
+
+    
+
+
+    return positions
+
+
+def check_colision(car_size, car_pos,angle, corner_angle, collision_im):
+    """
+    Function that detects if the car has droven outside of the road 
+    inputs: dimension of the car , position of the car , orientation angle of the car the angle from the center of the car to its edges
+    output: colision value 1 if the car as droven out of the road , 0 otherwise
+    
+    """
+
+    collision = 0
+
+
+    corner_top_right =  collision_im.get_at( (car_pos[0] + int(car_size[0]//2 * math.cos(corner_angle + angle)) , car_pos[1] + int(car_size[1]//2 * math.sin(corner_angle + angle)) ))
+    corner_top_left =  collision_im.get_at( (car_pos[0] - int(car_size[0]//2 * math.cos(corner_angle + angle)), car_pos[1] + int(car_size[1]//2 * math.sin(corner_angle + angle)) ))
+    corner_bot_right =  collision_im.get_at( (car_pos[0] + int(car_size[0]//2 * math.cos(corner_angle + angle)) , car_pos[1] - int(car_size[1]//2 * math.sin(corner_angle + angle)) ))
+    corner_bot_left =  collision_im.get_at( (car_pos[0] - int(car_size[0]//2 * math.cos(corner_angle + angle)) , car_pos[1] - int(car_size[1]//2 * math.sin(corner_angle + angle)) ))
+
+
+    pygame.draw.circle(screen,blue,(screen_center[0] - (car_size[0]//2 * math.cos(corner_angle + angle)), screen_center[1] + (car_size[1]//2 * math.sin(corner_angle + angle)) ), 5)
+    pygame.draw.circle(screen,blue,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle - angle)), screen_center[1] + (car_size[1]//2 * math.sin(corner_angle - angle)) ), 5)
+    pygame.draw.circle(screen,blue,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle + angle)) , screen_center[1] - (car_size[1]//2 * math.sin(corner_angle + angle))), 5)
+    pygame.draw.circle(screen,blue,(screen_center[0] - (car_size[0]//2 * math.cos(corner_angle - angle)) , screen_center[1] - (car_size[1]//2 * math.sin(corner_angle - angle)) ), 5)
+
+
+    if corner_top_right[0] == 255 and corner_top_right[1] == 255 and corner_top_right[2] == 255:
+        pygame.draw.circle(screen,red,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle - angle)) , screen_center[1] + (car_size[1]//2 * math.sin(corner_angle - angle))), 5)
+        #print(corner_top_right)
+        collision = 1
+    
+    if corner_top_left[0] == 255 and corner_top_left[1] == 255 and corner_top_left[2] == 255:
+        pygame.draw.circle(screen,red,(screen_center[0] -  (car_size[0]//2 * math.cos(corner_angle + angle)) , screen_center[1] + (car_size[1]//2 * math.sin(corner_angle + angle))), 5)
+        #print(corner_top_left)
+        collision = 1
+
+    if corner_bot_left[0] == 255 and corner_bot_left[1] == 255 and corner_bot_left[2] == 255:
+        pygame.draw.circle(screen,red,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle + angle)), screen_center[1] - (car_size[1]//2 * math.sin(corner_angle + angle)) ), 5)
+        #print(corner_bot_left)
+        collision = 1
+
+    if corner_bot_right[0] == 255 and corner_bot_right[1] == 255 and corner_bot_right[2] == 255:
+        pygame.draw.circle(screen,red,(screen_center[0] - (car_size[0]//2 * math.cos(corner_angle - angle)), screen_center[1] - (car_size[1]//2 * math.sin(corner_angle - angle)) ), 5)
+        #print(corner_bot_right)
+        collision = 1
+
+    return collision
+
+def car_model(v, w, theta, phi, L, SR):
+    """Function that simulates de real life motion of a car given its velocity and stearing velocity
+    Input: car velocity , car's stearing velocity ,cars position, cars orientation angle (theta), car wheal base distance 
+    Output : variation in X , variation in Y , variation in orientation (THETA) """
+    delta = np.dot(np.array([[np.cos(theta), 0], [np.sin(theta), 0 ],[np.tan(phi)/L , 0], [0, 1]]), np.transpose(np.array([v, w])))
+    delta_x = SR*delta[0]
+    delta_y =  SR*delta[1]
+    delta_theta = SR*delta[2]
+
+    return delta_x, delta_y, delta_theta
+
+
+def GPS(pos, angle):
+    """"Function that simulates the uncertainty of a gps system 
+    Input: car's position  
+    Output: car's position with associated uncertainty """
+
+    new_pos_x = pos[0] + np.random.normal(0, 3 + (7*np.sin(angle)))
+    new_pos_y = pos[1] + np.random.normal(0, 3 + (7*np.cos(angle)))
+
+    return (new_pos_x,new_pos_y)
+
+
+#################### MAIN ######################
+pygame.init()
+
+screen = pygame.display.set_mode((1000,800))
+
+car_image = "resources/mclarinho_50px.png"
+background_image = "resources/ist_map.png"
+collisions_image = "resources/ist_only_streets.png"
+trajectory_file = "trajectory_points.csv"
+
+
+background = pygame.image.load(background_image)
+collision_im = pygame.image.load(collisions_image)
+car = pygame.image.load(car_image)
+
+
+car_size = car.get_size()
+bg_size = background.get_size()
+screen_size = screen.get_size()
+
+screen_center = (screen_size[0]//2,screen_size[1]//2)
+
+intended_trajectory = read_csv_file(trajectory_file)
+
+position = intended_trajectory[0]
+
+bg_x = -(position[0] - (screen_size[0]//2))
+bg_y = -(position[1] - (screen_size[1]//2))
+
+
+#lista_pontos =generate_motion(points[12],points[13])
+
+
+running = True
+
+corner_angle = math.atan2(car_size[1]/2, car_size[0]/2)
+
+#____________RGB colors______________
+red = (255,0,0)
+green =(0,255,0)
+blue = (0,0,255)
+#____________________________________
+
+counter_point = 1
+next_point = 0
+
+clock = pygame.time.Clock()
+
+trajectory_made = []
+
+colision_counter = 0
+last_colision_val = 0
+gps_status = 1
+
+w = 0
+vel = 0
+fps = 60
+
+sample_rate = 6/fps
+
+############################## NEW VARIABLES #########################################
+xref = np.array(intended_trajectory)[:, 0]
+yref = np.array(intended_trajectory)[:, 1]
+theta_ref = np.array(intended_trajectory)[:, 2]
+
+
+xref = np.array(xref)*5.073825503/100
+yref = np.array(yref)*5.073825503/100
+theta_ref = np.array(theta_ref)
+angle = -theta_ref[0]*180/np.pi
+
+
+L = 2.2
+#h - periodo de sampling
+h = 0.1 
+#kv - constante de erro em x controla a velocidade
+Kv = 0.03 * 30
+#ks - constante de erro de orientcao (theta)
+Ks = 100
+#ki - constante de erro em y 
+Ki = 10
+#cenas para o filtro
+omega_c = 2.0*np.pi*(0+0.1)/2.0
+time = []
+theta = []
+phi = []
+x = []
+y = []
+
+# Setting standard filter requirements.
+order = 6
+fs = 1/h      
+cutoff = 0.05
+
+time.append(0)
+theta.append(theta_ref[0])
+phi.append(0)
+#we - erros no frame do mundo
+we = np.zeros(3)
+x.append(xref[0])
+y.append(yref[0])
+v_no_filter = []
+ws_no_filter = []
+ws = []
+v = []
+i = 1
+j = 0
+k = 0
+counter=0
+######################################################################################
+
+while running and j < len(intended_trajectory) - 3: 
+
+    #fps
+    clock.tick(fps)
+    bg_x = -(int(position[0]) - (screen_size[0]//2))
+    bg_y = -(int(position[1]) - (screen_size[1]//2)) 
+
+    car_pos = (-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 )
+
+    screen.blit(background,(bg_x,bg_y))
+
+    colisions = check_colision(car_size ,(-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 ),(math.pi * angle)/180, corner_angle, collision_im)
+
+    if colisions != last_colision_val:
+        colision_counter += colisions
+        last_colision_val = colisions
+    
+    vel, w, j, new_phi, new_theta = control_it(i, j, time, xref, yref, theta_ref, x, y, intended_trajectory, we, theta, v, Kv, ws_no_filter, Ks, Ki, ws, h, phi, L, counter)
+
+    delta_x , delta_y , delta_theta = car_model(vel ,w, new_theta, new_phi, 220/5.07, sample_rate)
+    
+    delta_x = delta_x/(5.073825503/100)
+    delta_y = delta_y/(5.073825503/100)
+    position = (position[0] + (delta_x ), position[1] + (delta_y))
+    delta_theta = delta_theta * 180 /np.pi
+    
+    angle -= 2*delta_theta/sample_rate
+    print("delta_theta " + str(delta_theta))
+    print("angle" + str(angle))
+
+    car_copy = pygame.transform.rotate(car, angle)
+    car_size = car_copy.get_size()
+
+    screen.blit(car_copy,(screen_center[0] - car_size[0]//2,screen_center[1] - car_size[1]//2 ))
+
+    trajectory_made.append((position[0],position[1]))
+    pygame.display.flip() 
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    i+=1
+
+
+
+print("Number of colisions: " + str(colision_counter))
+
+plt.rcParams["figure.figsize"] = (7,8)
+
+trajectory_made_x = [x for x,y in trajectory_made ]
+trajectory_made_y = [y for x,y in trajectory_made ]
+
+intended_trajectory_x = [x for x,y,z in intended_trajectory]
+intended_trajectory_y = [y for x,y,z in intended_trajectory]
+
+mapa = mpimg.imread(background_image)
+plt.imshow(mapa)
+
+
+plt.plot(intended_trajectory_x,intended_trajectory_y)
+plt.plot(trajectory_made_x,trajectory_made_y)
+plt.show()
+
+
+
+"""
+#MODO: TECLAS
+
+delta_x , delta_y , new_angle = car_model(v,w, -(math.pi * angle)/180, 20, sample_rate)
+
+position = (position[0] + (delta_x ), position[1] + (delta_y ))
+
+
+angle -= new_angle
+
+keys = pygame.key.get_pressed()
+
+if keys[pygame.K_RIGHT]:
+        w += 0.1
+if keys[pygame.K_LEFT]:
+        w -= 0.1
+    
+if keys[pygame.K_UP]:
+        v += 10
+
+if keys[pygame.K_DOWN]:
+        v -= 10
+
+"""
+
+"""
+#MODO: RETAS
+
+position = lista_pontos[next_point]
+if next_point + 1 < len(lista_pontos):
+    next_point+=1
+else:
+    print(colision_counter)
+"""
+"""
+#MODO: ONLY GUIDANCE
+position = csv_list[next_point]
+if next_point + 1 < len(csv_list):
+    next_point+=1
+
+"""
+"""
+GPS
+
+intended_gps_value = (-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 )
+
+gps_x = 0
+gps_y = 0
+
+for _ in range(0, 100) :
+
+    X_x , Y_y = GPS((-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 ), (math.pi * angle)/180)
+
+    gps_x += X_x
+    gps_y += Y_y
+
+print("-----------------")
+print("intended_gps_value")
+print(intended_gps_value)
+print("gps")
+print((gps_x//100, gps_y//100))
+print("single measurment")
+print((X_x,Y_y))
+print("-----------------")
+
+"""
