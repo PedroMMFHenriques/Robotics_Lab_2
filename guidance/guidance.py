@@ -1119,7 +1119,7 @@ def get_trajectory(show_trajectory = False):
         plt.scatter([x_init, x_end], [y_init, y_end], c = "r", marker = "+")
 
         #Verify if both chosen points are in a street
-        if(only_street_mat[y_init][x_init] == 1 or only_street_mat[y_end][x_end] == 1): #Note: only_street_mat is transposed
+        if(list(only_street_mat[y_init][x_init]) == [1, 1, 1, 1] or list(only_street_mat[y_end][x_end]) == [1, 1, 1, 1]): #Note: only_street_mat is transposed
             plt.close('all')
             print("Invalid input (outside of valid street)!")
             continue
