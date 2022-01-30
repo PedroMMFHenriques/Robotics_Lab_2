@@ -6,9 +6,6 @@
     - Rafael Carvalho, 93164
     Date last modified: 30/01/2022
 """
-
-import matplotlib
-matplotlib.use('Qt5Agg') # pip install pyqt5
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
@@ -1102,9 +1099,6 @@ def get_trajectory(show_trajectory = False):
     valid_points = False
     while(not valid_points):
         nodes_graph = init_nodes_graph
-
-        manager = plt.get_current_fig_manager()
-        manager.window.showMaximized()
 
         plt.imshow(mapa_ist)
         
