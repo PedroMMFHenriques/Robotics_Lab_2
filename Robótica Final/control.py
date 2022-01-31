@@ -9,8 +9,8 @@ def joint(xref, yref, theta_ref, x, y, index, values, counter):
 	diff_orientation = 0
 	#if index + 10 > len(values):
 	final_index = len(values)
-	if index<len(values)-25:
-		final_index= index+25
+	if index<len(values)- 10:
+		final_index= index+10
 	j=index+1
 	#else:
 	#	final_index = index + 10
@@ -18,7 +18,7 @@ def joint(xref, yref, theta_ref, x, y, index, values, counter):
 	control=0
 	for i in range(index,final_index):
 		diff=np.abs(theta_ref[i]-theta_ref[index])
-		if diff > (diff_orientation+1.57):
+		if diff > (diff_orientation+np.pi/7.5):
 			diff_orientation=diff
 			j = i
 			control=1
@@ -61,7 +61,7 @@ def control_it(i, j, time, xref, yref, theta_ref, x, y, values, we, theta, v_no_
 	time.append(time[i-1] + h)
 	j=joint(xref, yref, theta_ref, x[i-1], y[i-1], j, values, counter)
 	if control==0:
-		if j >= len(values)- 2:
+		if j >= len(values) - 2:
 			k = len(values) - 1
 		else:
 			k = j + 2
@@ -91,7 +91,7 @@ def control_it(i, j, time, xref, yref, theta_ref, x, y, values, we, theta, v_no_
 	if i < 10:
 		ws_filtered.append(ws_no_filter[i-1])
 	else: 
-		ws_filtered = butter_lowpass_filter(ws_no_filter, 0.5, 1/h, 2)
+		ws_filtered = butter_lowpass_filter(ws_no_filter, 0.3, 1/h, 2)
 	ws.append(ws_filtered[i-1])  
 	delta = np.dot(np.array([[np.cos(theta[i-1]), 0], [np.sin(theta[i-1]), 0 ],[np.tan(phi[i-1])/L , 0], [0, 1]]), np.transpose(np.array([v[i-1], ws[i-1]])))
 	x.append(x[i-1] + h*delta[0])

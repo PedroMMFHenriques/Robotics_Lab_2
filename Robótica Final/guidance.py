@@ -1073,7 +1073,6 @@ def get_trajectory(show_trajectory = False):
 
     n_nodes = len(init_nodes_graph)
 
-    plt.rcParams["figure.figsize"] = (7,8)
     #Repeat if the user didn't chose valid initial and end points
     valid_points = False
     while(not valid_points):
@@ -1152,6 +1151,8 @@ def get_trajectory(show_trajectory = False):
 
     #Uncomment to show trajectory plot
     if(show_trajectory == True):
+        manager = plt.get_current_fig_manager()
+        manager.window.showMaximized()
         plt.imshow(mapa_ist)
         plt.scatter(xx, yy, s = 8)
         plt.scatter([x_init, x_end], [y_init, y_end], c = 'r', marker = '+')
