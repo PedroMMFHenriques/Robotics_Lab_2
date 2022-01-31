@@ -1094,12 +1094,13 @@ def get_trajectory(show_trajectory = False):
     g = Graph()
 
     n_nodes = len(init_nodes_graph)
-
+    
+    plt.rcParams["figure.figsize"] = (7,8)
     #Repeat if the user didn't chose valid initial and end points
     valid_points = False
     while(not valid_points):
         nodes_graph = init_nodes_graph
-
+        
         plt.imshow(mapa_ist)
         
         #Request the user for the initial and end points
