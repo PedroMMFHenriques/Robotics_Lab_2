@@ -6,3 +6,6 @@ pip install pygame
 pip install numpy
 pip install scipy
 pip install matplotlib
+
+recommended package (matplotlib backend):
+pip install PyQt5
