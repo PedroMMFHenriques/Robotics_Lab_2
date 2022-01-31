@@ -14,7 +14,6 @@ from scipy.interpolate import *
 
 """
     Graph class and respective functions, before being modified to fit this project, were based on the code by:
-
     Author: Aditya Goel
     Availability: https://www.geeksforgeeks.org/printing-paths-dijkstras-shortest-path-algorithm/
 """
@@ -25,11 +24,9 @@ class Graph:
     def minDistance(self,dist,queue):
         """
         Finds the node (vertex) with minimum distance value from the list of nodes still in queue
-
         Input:
             - dist: list of the distances between each node
             - queue: list of nodes still in queue
-
         Output:
             - min_index: index of the minimum distance value node still in queue
         """
@@ -48,7 +45,6 @@ class Graph:
     def appendPath(self, parent, dest, path):
         """
         Recursive function that appends the shortest path from source to the destiny using parent array.
-
         Input:
             - parent: list of the shortest path tree
             - dest: destiny node
@@ -73,7 +69,6 @@ class Graph:
     def findSolution(self, dist, parent, src, dest):
         """
             Constructs the path from the source to the destiny.
-
             Input:
                 - dist: list of the distance between nodes
                 - parent: list of the shortest path tree
@@ -93,7 +88,6 @@ class Graph:
     def dijkstra(self, graph, src, dest):
         """
         Implements Dijkstra's single source shortest path algorithm for a graph represented using adjacency matrix
-
         Input:
             - graph: graph corresponding to the adjacency matrix representation the nodes and its edges
             - src: source node
@@ -143,7 +137,6 @@ class Graph:
 
 """
     QuinticPolynomials class and quintic_polynomials_planner function, were based on the code by:
-
     Author: Atsushi Sakai
     Availability: https://github.com/AtsushiSakai/PythonRobotics/blob/master/PathPlanning/QuinticPolynomialsPlanner/quintic_polynomials_planner.py
 """
@@ -268,7 +261,6 @@ def quintic_polynomials_planner(sx, sy, syaw, sv, sa, gx, gy, gyaw, gv, ga, max_
 def read_nodes_dist_file():
     """
     Reads file with the distances between each adjacent node and turns the data into a list
-
     Output:
         - nodes_graph: list of the distances between each adjacent node
     """
@@ -290,7 +282,6 @@ def read_nodes_dist_file():
 def read_nodes_list():
     """
     Reads file with the position of each node and turns the data into a list
-
     Output:
         - nodes_list: list of the position of each node
     """
@@ -366,10 +357,8 @@ def read_small_steps_list():
 def calc_dist(x1,y1,x2,y2):
     """
     Calculates the distance between 2 given points
-
     Input: 
         - x1,y1,x2,y2: x and y position of a pair of points
-
     Output: 
         - dist: euclidean distance between the pair of points
     """
@@ -379,11 +368,9 @@ def calc_dist(x1,y1,x2,y2):
 def check_area(x, y, area_list):
     """
     Makes a list of drivable areas the point is inside
-
     Input:
         - x,y: x and y position of the point;
         - area_list: list of drivable areas
-
     Output:
         - areas: list of the areas the point is inside
     """
@@ -396,7 +383,6 @@ def check_area(x, y, area_list):
 def add_node(x, y, node_graph, area_list, final_areas=None, xy_final=None):
     """
     For each area the point is inside, add the point to the node list and assigns which nodes are adjacent to it and which ones it is adjacent to
-
     Input:
         - x,y: x and y position of the point; 
         - node_graph: list of nodes; 
@@ -654,12 +640,10 @@ def add_node(x, y, node_graph, area_list, final_areas=None, xy_final=None):
 def add_prev_and_next_node(path, xy_init, xy_end, area_list):
     """
     Find in which edge the chosen initial and end points are by determining which node came before or after, respectively, adding them to the path
-
     Input:
         - path: list of nodes in the path;
         - xy_init, xy_end: coordinates of the initial and end points;
         - area_list: list of the corners of each drivable area
-
     Output:
         - complete_path: extended path with the new auxiliary nodes
     """
@@ -937,12 +921,10 @@ def end_from_trajectory(complete_path, nodes_list, steps_list):
 def gen_precise_path(path, steps_list, nodes_list, area_list):
     """
     Receives the path calculated by the Djikstra algorithm and improves it by adding intermediate targets between each node
-
     Input:
         - path: list of nodes in the path; 
         - steps_list: list with the position of each step (intermediate targets between 2 nodes); 
         - area_list: list of drivable areas;
-
     Output:
         - precise_path: path from the initial point to the end point with target points in between
     """
@@ -975,10 +957,8 @@ def gen_precise_path(path, steps_list, nodes_list, area_list):
 def trajectory_interpol(precise_path):
     """
     Interpolates the trajectory between each point in the list with the precise path trough quintic polynomials
-
     Input: 
         - precise_path: path from the initial point to the end point with target points in between
-
     Output: 
         - [trajectory_x, trajectory_y]: list with interpolated trajectory (x, y)
         - orientation_list: list with interpolated orientations (theta)
@@ -1075,10 +1055,8 @@ def trajectory_interpol(precise_path):
 def get_trajectory(show_trajectory = False):
     """
     Asks the user to input the initial and final points on the map and generates a valid trajectory between them
-
     Input: 
         - show_trajectory: show the plot of the trajectory
-
     Output: 
         - trajectory_points.csv: file with the position of each point in the trajectory and the orientation of the vehicle at each time step
     """
