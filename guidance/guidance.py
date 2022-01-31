@@ -6,9 +6,6 @@
     - Rafael Carvalho, 93164
     Date last modified: 30/01/2022
 """
-
-import matplotlib
-matplotlib.use('Qt5Agg') # pip install pyqt5
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
@@ -1103,9 +1100,6 @@ def get_trajectory(show_trajectory = False):
     while(not valid_points):
         nodes_graph = init_nodes_graph
 
-        manager = plt.get_current_fig_manager()
-        manager.window.showMaximized()
-
         plt.imshow(mapa_ist)
         
         #Request the user for the initial and end points
@@ -1117,7 +1111,7 @@ def get_trajectory(show_trajectory = False):
         y_end = int(round(inputs[1][1]))
 
         plt.scatter([x_init, x_end], [y_init, y_end], c = "r", marker = "+")
-
+        
         #Verify if both chosen points are in a street
         if(list(only_street_mat[y_init][x_init]) == [1, 1, 1, 1] or list(only_street_mat[y_end][x_end]) == [1, 1, 1, 1]): #Note: only_street_mat is transposed
             plt.close('all')
@@ -1190,11 +1184,27 @@ def get_trajectory(show_trajectory = False):
     #Save the trajectory to a new file
     fout = open('trajectory_points.csv', 'w', newline='')
     writer = csv.writer(fout)
+    domain = [0, 2*np.pi]
     for i in range(1,len(xx)):
+        while((orientation[i] <= domain[0]) or (orientation[i] >= domain[1])):
+            if(orientation[i] <= domain[0]):
+                orientation[i] = orientation[i] + 2*np.pi
+            if(orientation[i] >= domain[1]):  
+                orientation[i] = orientation[i] - 2*np.pi
+
+        if((orientation[i] > domain[1] - np.pi/4) and (orientation[i-1] < domain[0] + np.pi/4)):
+            orientation[i] = orientation[i] - 2*np.pi
+            domain = [domain[0]-np.pi, domain[1]-np.pi]
+
+        if((orientation[i-1] > domain[1] - np.pi/4) and (orientation[i] < domain[0] + np.pi/4)):
+            orientation[i] = orientation[i] + 2*np.pi
+            domain = [domain[0]+np.pi, domain[1]+np.pi]
+
+
         if(i == (len(xx)-1)):
             writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
         else:
             writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
     fout.close()
 
-get_trajectory(show_trajectory = True)
+get_trajectory(show_trajectory=True)
