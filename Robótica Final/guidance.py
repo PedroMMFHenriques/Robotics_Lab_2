@@ -1184,7 +1184,23 @@ def get_trajectory(show_trajectory = False):
     #Save the trajectory to a new file
     fout = open('trajectory_points.csv', 'w', newline='')
     writer = csv.writer(fout)
+    domain = [0, 2*np.pi]
     for i in range(1,len(xx)):
+        while((orientation[i] <= domain[0]) or (orientation[i] >= domain[1])):
+            if(orientation[i] <= domain[0]):
+                orientation[i] = orientation[i] + 2*np.pi
+            if(orientation[i] >= domain[1]):  
+                orientation[i] = orientation[i] - 2*np.pi
+
+        if((orientation[i] > domain[1] - np.pi/4) and (orientation[i-1] < domain[0] + np.pi/4)):
+            orientation[i] = orientation[i] - 2*np.pi
+            domain = [domain[0]-np.pi, domain[1]-np.pi]
+
+        if((orientation[i-1] > domain[1] - np.pi/4) and (orientation[i] < domain[0] + np.pi/4)):
+            orientation[i] = orientation[i] + 2*np.pi
+            domain = [domain[0]+np.pi, domain[1]+np.pi]
+
+
         if(i == (len(xx)-1)):
             writer.writerow([int(xx[i]), int(yy[i]), orientation[i]])
         else:
