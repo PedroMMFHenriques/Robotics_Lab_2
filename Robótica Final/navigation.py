@@ -123,6 +123,7 @@ def check_colision(car_size, car_pos,angle, corner_angle, collision_im):
     """
 
     collision = 0
+    corner = 0
 
 
     corner_top_right =  collision_im.get_at( (car_pos[0] + int(car_size[0]//2 * math.cos(corner_angle + angle)) , car_pos[1] + int(car_size[1]//2 * math.sin(corner_angle + angle)) ))
@@ -130,34 +131,38 @@ def check_colision(car_size, car_pos,angle, corner_angle, collision_im):
     corner_bot_right =  collision_im.get_at( (car_pos[0] + int(car_size[0]//2 * math.cos(corner_angle + angle)) , car_pos[1] - int(car_size[1]//2 * math.sin(corner_angle + angle)) ))
     corner_bot_left =  collision_im.get_at( (car_pos[0] - int(car_size[0]//2 * math.cos(corner_angle + angle)) , car_pos[1] - int(car_size[1]//2 * math.sin(corner_angle + angle)) ))
 
-
+    """
     pygame.draw.circle(screen,blue,(screen_center[0] - (car_size[0]//2 * math.cos(corner_angle + angle)), screen_center[1] + (car_size[1]//2 * math.sin(corner_angle + angle)) ), 5)
     pygame.draw.circle(screen,blue,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle - angle)), screen_center[1] + (car_size[1]//2 * math.sin(corner_angle - angle)) ), 5)
     pygame.draw.circle(screen,blue,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle + angle)) , screen_center[1] - (car_size[1]//2 * math.sin(corner_angle + angle))), 5)
     pygame.draw.circle(screen,blue,(screen_center[0] - (car_size[0]//2 * math.cos(corner_angle - angle)) , screen_center[1] - (car_size[1]//2 * math.sin(corner_angle - angle)) ), 5)
-
+    """
 
     if corner_top_right[0] == 255 and corner_top_right[1] == 255 and corner_top_right[2] == 255:
-        pygame.draw.circle(screen,red,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle - angle)) , screen_center[1] + (car_size[1]//2 * math.sin(corner_angle - angle))), 5)
+        #pygame.draw.circle(screen,red,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle - angle)) , screen_center[1] + (car_size[1]//2 * math.sin(corner_angle - angle))), 5)
         #print(corner_top_right)
         collision = 1
+        corner = 1
     
     if corner_top_left[0] == 255 and corner_top_left[1] == 255 and corner_top_left[2] == 255:
-        pygame.draw.circle(screen,red,(screen_center[0] -  (car_size[0]//2 * math.cos(corner_angle + angle)) , screen_center[1] + (car_size[1]//2 * math.sin(corner_angle + angle))), 5)
+        #pygame.draw.circle(screen,red,(screen_center[0] -  (car_size[0]//2 * math.cos(corner_angle + angle)) , screen_center[1] + (car_size[1]//2 * math.sin(corner_angle + angle))), 5)
         #print(corner_top_left)
         collision = 1
+        corner = 2
 
     if corner_bot_left[0] == 255 and corner_bot_left[1] == 255 and corner_bot_left[2] == 255:
-        pygame.draw.circle(screen,red,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle + angle)), screen_center[1] - (car_size[1]//2 * math.sin(corner_angle + angle)) ), 5)
+        #pygame.draw.circle(screen,red,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle + angle)), screen_center[1] - (car_size[1]//2 * math.sin(corner_angle + angle)) ), 5)
         #print(corner_bot_left)
         collision = 1
+        corner = 3
 
     if corner_bot_right[0] == 255 and corner_bot_right[1] == 255 and corner_bot_right[2] == 255:
-        pygame.draw.circle(screen,red,(screen_center[0] - (car_size[0]//2 * math.cos(corner_angle - angle)), screen_center[1] - (car_size[1]//2 * math.sin(corner_angle - angle)) ), 5)
+        #pygame.draw.circle(screen,red,(screen_center[0] - (car_size[0]//2 * math.cos(corner_angle - angle)), screen_center[1] - (car_size[1]//2 * math.sin(corner_angle - angle)) ), 5)
         #print(corner_bot_right)
         collision = 1
+        corner = 4
 
-    return collision
+    return collision, corner
 
 def car_model(v, w, theta, phi, L, SR):
     """Function that simulates de real life motion of a car given its velocity and stearing velocity
@@ -182,6 +187,9 @@ def GPS(pos, angle):
 
 
 #################### MAIN ######################
+Energy = float(input("Initial Energy (Wh): "))
+Energy_spent = 0
+
 get_trajectory(show_trajectory = False)
 pygame.init()
 
@@ -193,13 +201,20 @@ collisions_image = "resources/ist_only_streets.png"
 trajectory_file = "trajectory_points.csv"
 GPS_on_image = "resources/GPS_on.png"
 GPS_off_image = "resources/GPS_off.png"
-
+bar_3 = "resources/bars_3.png"
+bar_2 = "resources/bars_2.png"
+bar_1 = "resources/bars_1.png"
+bar_0 = "resources/bars_0.png"
 
 background = pygame.image.load(background_image)
 collision_im = pygame.image.load(collisions_image)
 car = pygame.image.load(car_image)
 gps_indicator_on = pygame.image.load(GPS_on_image)
 gps_indicator_off = pygame.image.load(GPS_off_image)
+bars_3 = pygame.image.load(bar_3)
+bars_2 = pygame.image.load(bar_2)
+bars_1 = pygame.image.load(bar_1)
+bars_0 = pygame.image.load(bar_0)
 
 
 car_size = car.get_size()
@@ -238,6 +253,7 @@ trajectory_made = []
 colision_points = []
 
 colision_counter = 0
+colision_corner = 0
 last_colision_val = 0
 gps_status = 1
 
@@ -246,6 +262,8 @@ vel = 0
 fps = 60
 
 sample_rate = 6/fps
+
+M = 810 
 
 ############################## NEW VARIABLES #########################################
 xref = np.array(intended_trajectory)[:, 0]
@@ -269,7 +287,6 @@ Ks = 100
 #ki - constante de erro em y 
 Ki = 5
 #cenas para o filtro
-omega_c = 2.0*np.pi*(0+0.1)/2.0
 time = []
 theta = []
 phi = []
@@ -324,20 +341,29 @@ while running and j < len(intended_trajectory) - 3:
     screen.fill((255, 255, 255))
     screen.blit(background,(bg_x,bg_y))
 
-    colisions = check_colision(car_size ,(-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 ),(math.pi * angle)/180, corner_angle, collision_im)
+    colisions, colision_corner = check_colision(car_size ,(-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 ),(math.pi * angle)/180, corner_angle, collision_im)
 
     if colisions != last_colision_val:
         colision_counter += colisions
-        colision_points.append((position[0],position[1]))
+        
+        if colisions == 1 :
+            if colision_corner == 1 :
+                colision_points.append((position[0] + int(car_size[0]//2 * math.cos(corner_angle + angle)) ,position[1] + int(car_size[0]//2 * math.sin(corner_angle + angle))))
+            if colision_corner == 2 :
+                colision_points.append((position[0] - int(car_size[0]//2 * math.cos(corner_angle + angle)), position[1]  + int(car_size[0]//2 * math.sin(corner_angle + angle))))
+            if colision_corner == 3 :
+                colision_points.append((position[0] - int(car_size[0]//2 * math.cos(corner_angle + angle)),position[1]  - int(car_size[0]//2 * math.sin(corner_angle + angle))))
+            if colision_corner == 4 :
+                colision_points.append((position[0] + int(car_size[0]//2 * math.cos(corner_angle + angle)),position[1]  - int(car_size[0]//2 * math.sin(corner_angle + angle))))
+
         last_colision_val = colisions
 
     
     if gps_status == True:
-        print("sem erro: " + str(x[i-1]) + ", " + str(y[i-1]))
+        #print("sem erro: " + str(x[i-1]) + ", " + str(y[i-1]))
         gps_x = 0
         gps_y = 0
         for _ in range(0, 500) :
-
             X_x , Y_y = GPS((x[i-1], y[i-1]), angle)
             gps_x += X_x
             gps_y += Y_y
@@ -345,13 +371,12 @@ while running and j < len(intended_trajectory) - 3:
         x[i-1] = gps_x/500
         y[i-1] = gps_y/500
 
-        print("com erro: " + str(x[i-1]) + ", " + str(y[i-1]))
+        #print("com erro: " + str(x[i-1]) + ", " + str(y[i-1]))
 
         vel, w, j, new_phi, new_theta = control_it(i, j, time, xref, yref, theta_ref, x, y, intended_trajectory, we, theta, v_no_filter, v, Kv, ws_no_filter, Ks, Ki, ws, h, phi, L, counter,  ws_filtered,
 	v_filtered)
     else:
-        vel, w, j, new_phi, new_theta = control_it(i, j, time, xref, yref, theta_ref, x, y, intended_trajectory, we, theta, v_no_filter, v, Kv, ws_no_filter, Ks, Ki, ws, h, phi, L, counter,  ws_filtered,
-	v_filtered)
+        vel, w, j, new_phi, new_theta = control_it(i, j, time, xref, yref, theta_ref, x, y, intended_trajectory, we, theta, v_no_filter, v, Kv, ws_no_filter, Ks, Ki, ws, h, phi, L, counter,  ws_filtered, v_filtered)
 
     delta_x , delta_y , delta_theta = car_model(vel ,w, new_theta, new_phi, 22, sample_rate)
     
@@ -380,6 +405,27 @@ while running and j < len(intended_trajectory) - 3:
         gps_status = True
 
     trajectory_made.append((position[0],position[1]))
+    
+    
+    delta_v = (v[i-1] - v[i-2])/sample_rate
+    P_0 = 0
+    delta_e = (M*abs(delta_v)*abs(v[i-1]) + P_0)*sample_rate/(3600) #Wh
+    Energy_spent += delta_e
+    print("Energy Spent(Wh): " + str(round(float(Energy_spent),2)) + "/" + str(Energy))
+    
+    if Energy_spent < 1/3*Energy:
+        screen.blit(bars_3, (100,0))
+    elif Energy_spent < 2/3*Energy:
+        screen.blit(bars_2, (100,0))
+    elif Energy_spent < Energy:
+        screen.blit(bars_1, (100,0))
+    elif round(Energy_spent,2) == Energy:
+        screen.blit(bars_0, (100,0))
+    elif Energy_spent > Energy:
+        screen.blit(bars_0, (100,0))
+        print("Out of Battery!")
+        break
+    
     pygame.display.flip() 
 
     for event in pygame.event.get():
@@ -407,7 +453,7 @@ plt.imshow(mapa)
 
 plt.plot(intended_trajectory_x,intended_trajectory_y)
 plt.plot(trajectory_made_x,trajectory_made_y)
-plt.scatter((colision_points_x,colision_points_y), marker="*")
+plt.scatter(colision_points_x,colision_points_y,c = "r", marker="*")
 plt.show()
 
 
