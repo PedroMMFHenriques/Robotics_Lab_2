@@ -1,12 +1,23 @@
+"""
+    Authors:
+    - Goncalo Teixeira, 93068
+    - Goncalo Fernandes, 93070
+    - Pedro Martins, 93153
+    Date last modified: 30/01/2022
+"""
+
+
+from distutils.ccompiler import gen_preprocess_options
+from pickle import FALSE, TRUE
 from time import sleep
 import pygame 
 import math
 import numpy as np
 from pygame.locals import *
-import csv
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from control import read_csv_file, control_it
+from guidance import get_trajectory
 
 
 def sensor(car_pos, car_direction, background):
@@ -64,11 +75,6 @@ def generate_motion(point_1, point_2):
     if delta_y < 0:
         y_signal = -1
 
-
-    print(delta_x)
-    print(delta_y)
-
-
     positions.append( point_1)
 
     if abs(delta_x) > abs(delta_y) :
@@ -104,9 +110,6 @@ def generate_motion(point_1, point_2):
             angle = int(180 * math.atan2((delta_y),(delta_x)) / math.pi)
 
             positions.append((positions[i-1][0] + (min_step * x_signal) ,positions[i-1][1]+ (min_step * y_signal), angle))
-
-    
-
 
     return positions
 
@@ -172,27 +175,31 @@ def GPS(pos, angle):
     """"Function that simulates the uncertainty of a gps system 
     Input: car's position  
     Output: car's position with associated uncertainty """
-
-    new_pos_x = pos[0] + np.random.normal(0, 3 + (7*np.sin(angle)))
-    new_pos_y = pos[1] + np.random.normal(0, 3 + (7*np.cos(angle)))
+    new_pos_x = pos[0] + np.random.normal(0, np.abs(0.3 + (0.7*np.sin(angle))))
+    new_pos_y = pos[1] + np.random.normal(0, np.abs(0.3 + (0.7*np.cos(angle))))
 
     return (new_pos_x,new_pos_y)
 
 
 #################### MAIN ######################
+get_trajectory(show_trajectory = False)
 pygame.init()
 
 screen = pygame.display.set_mode((1000,800))
 
-car_image = "resources/mclarinho_50px.png"
+car_image = "resources/red_car.png"
 background_image = "resources/ist_map.png"
 collisions_image = "resources/ist_only_streets.png"
 trajectory_file = "trajectory_points.csv"
+GPS_on_image = "resources/GPS_on.png"
+GPS_off_image = "resources/GPS_off.png"
 
 
 background = pygame.image.load(background_image)
 collision_im = pygame.image.load(collisions_image)
 car = pygame.image.load(car_image)
+gps_indicator_on = pygame.image.load(GPS_on_image)
+gps_indicator_off = pygame.image.load(GPS_off_image)
 
 
 car_size = car.get_size()
@@ -228,6 +235,7 @@ next_point = 0
 clock = pygame.time.Clock()
 
 trajectory_made = []
+colision_points = []
 
 colision_counter = 0
 last_colision_val = 0
@@ -255,11 +263,11 @@ L = 2.2
 #h - periodo de sampling
 h = 0.1 
 #kv - constante de erro em x controla a velocidade
-Kv = 0.03 * 30
+Kv = 0.03 * 20
 #ks - constante de erro de orientcao (theta)
 Ks = 100
 #ki - constante de erro em y 
-Ki = 10
+Ki = 5
 #cenas para o filtro
 omega_c = 2.0*np.pi*(0+0.1)/2.0
 time = []
@@ -269,9 +277,9 @@ x = []
 y = []
 
 # Setting standard filter requirements.
-order = 6
-fs = 1/h      
-cutoff = 0.05
+ws_filtered = []
+v_filtered = []
+
 
 time.append(0)
 theta.append(theta_ref[0])
@@ -290,6 +298,20 @@ k = 0
 counter=0
 ######################################################################################
 
+#________________ GPS DEAD ZONES ______________#
+
+
+GPS_dead_1_x1 = 2330
+GPS_dead_1_y1 = 500
+GPS_dead_1_x2 = 2700
+GPS_dead_1_y2 = 1400
+
+GPS_dead_2_x1 = 1870
+GPS_dead_2_y1 = 3800
+GPS_dead_2_x2 = 2600
+GPS_dead_2_y2 = 4000
+
+
 while running and j < len(intended_trajectory) - 3: 
 
     #fps
@@ -299,31 +321,63 @@ while running and j < len(intended_trajectory) - 3:
 
     car_pos = (-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 )
 
+    screen.fill((255, 255, 255))
     screen.blit(background,(bg_x,bg_y))
 
     colisions = check_colision(car_size ,(-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 ),(math.pi * angle)/180, corner_angle, collision_im)
 
     if colisions != last_colision_val:
         colision_counter += colisions
+        colision_points.append((position[0],position[1]))
         last_colision_val = colisions
-    
-    vel, w, j, new_phi, new_theta = control_it(i, j, time, xref, yref, theta_ref, x, y, intended_trajectory, we, theta, v, Kv, ws_no_filter, Ks, Ki, ws, h, phi, L, counter)
 
-    delta_x , delta_y , delta_theta = car_model(vel ,w, new_theta, new_phi, 220/5.07, sample_rate)
+    
+    if gps_status == True:
+        print("sem erro: " + str(x[i-1]) + ", " + str(y[i-1]))
+        gps_x = 0
+        gps_y = 0
+        for _ in range(0, 500) :
+
+            X_x , Y_y = GPS((x[i-1], y[i-1]), angle)
+            gps_x += X_x
+            gps_y += Y_y
+
+        x[i-1] = gps_x/500
+        y[i-1] = gps_y/500
+
+        print("com erro: " + str(x[i-1]) + ", " + str(y[i-1]))
+
+        vel, w, j, new_phi, new_theta = control_it(i, j, time, xref, yref, theta_ref, x, y, intended_trajectory, we, theta, v_no_filter, v, Kv, ws_no_filter, Ks, Ki, ws, h, phi, L, counter,  ws_filtered,
+	v_filtered)
+    else:
+        vel, w, j, new_phi, new_theta = control_it(i, j, time, xref, yref, theta_ref, x, y, intended_trajectory, we, theta, v_no_filter, v, Kv, ws_no_filter, Ks, Ki, ws, h, phi, L, counter,  ws_filtered,
+	v_filtered)
+
+    delta_x , delta_y , delta_theta = car_model(vel ,w, new_theta, new_phi, 22, sample_rate)
     
     delta_x = delta_x/(5.073825503/100)
     delta_y = delta_y/(5.073825503/100)
-    position = (position[0] + (delta_x ), position[1] + (delta_y))
+    position = (position[0] + (delta_x), position[1] + (delta_y))
     delta_theta = delta_theta * 180 /np.pi
     
-    angle -= 2*delta_theta/sample_rate
-    print("delta_theta " + str(delta_theta))
-    print("angle" + str(angle))
+    angle -= delta_theta / sample_rate  
 
     car_copy = pygame.transform.rotate(car, angle)
     car_size = car_copy.get_size()
 
     screen.blit(car_copy,(screen_center[0] - car_size[0]//2,screen_center[1] - car_size[1]//2 ))
+
+    if (position[0] > GPS_dead_1_x1 and position[0] < GPS_dead_1_x2) and (position[1] >  GPS_dead_1_y1 and position[1] < GPS_dead_1_y2):
+        
+        screen.blit(gps_indicator_off, (0,0))
+        gps_status = False
+    elif (position[0] > GPS_dead_2_x1 and position[0] < GPS_dead_2_x2) and (position[1] >  GPS_dead_2_y1 and position[1] < GPS_dead_2_y2):
+        
+        screen.blit(gps_indicator_off, (0,0))
+        gps_status = False
+    else :
+        screen.blit(gps_indicator_on, (0,0))
+        gps_status = True
 
     trajectory_made.append((position[0],position[1]))
     pygame.display.flip() 
@@ -344,6 +398,8 @@ trajectory_made_y = [y for x,y in trajectory_made ]
 
 intended_trajectory_x = [x for x,y,z in intended_trajectory]
 intended_trajectory_y = [y for x,y,z in intended_trajectory]
+colision_points_x = [x for x,y in colision_points]
+colision_points_y = [y for x,y in colision_points]
 
 mapa = mpimg.imread(background_image)
 plt.imshow(mapa)
@@ -351,6 +407,7 @@ plt.imshow(mapa)
 
 plt.plot(intended_trajectory_x,intended_trajectory_y)
 plt.plot(trajectory_made_x,trajectory_made_y)
+plt.scatter((colision_points_x,colision_points_y), marker="*")
 plt.show()
 
 
