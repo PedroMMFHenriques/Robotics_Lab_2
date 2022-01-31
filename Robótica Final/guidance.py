@@ -4,7 +4,7 @@
 	- Luís Barriga,    93115
 	- Pedro Henriques, 93159
     - Rafael Carvalho, 93164
-    Date last modified: 30/01/2022
+    Date last modified: 31/01/2022
 """
 import csv
 import numpy as np

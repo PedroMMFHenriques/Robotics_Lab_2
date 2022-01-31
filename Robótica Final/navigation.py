@@ -1,9 +1,10 @@
+# Robotics lab 2, Navigation
 """
     Authors:
     - Goncalo Teixeira, 93068
     - Goncalo Fernandes, 93070
     - Pedro Martins, 93153
-    Date last modified: 30/01/2022
+    Date last modified: 31/01/2022
 """
 
 
@@ -35,18 +36,12 @@ def sensor(car_pos, car_direction, background):
         s_colors[3] = background.get_at( (car_pos[0] + int(i * math.cos(car_direction + 45)) , car_pos[1] + int(i * math.cos(car_direction + 45)) ))
         s_colors[4] = background.get_at( (car_pos[0] + int(i * math.cos(car_direction + 90)) , car_pos[1] + int(i * math.cos(car_direction + 90)) ))
 
-        #print(i)
-
-        #print(s_colors)
-
 
         for j in range(0, 5):
             if s_colors[j] != (242, 243, 245,255) and hit[j] == 0:
                 sensor[j] = i
                 hit[j] = 1
-                #print(s_colors[j])
                 
-
     return sensor
 
 def generate_motion(point_1, point_2):
@@ -142,25 +137,21 @@ def check_colision(car_size, car_pos,angle, corner_angle, collision_im):
 
     if corner_top_right[0] == 255 and corner_top_right[1] == 255 and corner_top_right[2] == 255:
         pygame.draw.circle(screen,red,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle - angle)), screen_center[1] + (car_size[1]//2 * math.sin(corner_angle - angle)) ), 5)
-        #print(corner_top_right)
         collision = 1
         corner = 1
     
     elif corner_top_left[0] == 255 and corner_top_left[1] == 255 and corner_top_left[2] == 255:
         pygame.draw.circle(screen,red,(screen_center[0] + (car_size[0]//2 * math.cos(corner_angle + angle)) , screen_center[1] - (car_size[1]//2 * math.sin(corner_angle + angle))), 5)
-        #print(corner_top_left)
         collision = 1
         corner = 2
 
     elif corner_bot_right[0] == 255 and corner_bot_right[1] == 255 and corner_bot_right[2] == 255:
         pygame.draw.circle(screen,red,(screen_center[0] - (car_size[0]//2 * math.cos(corner_angle + angle)), screen_center[1] + (car_size[1]//2 * math.sin(corner_angle + angle)) ), 5)
-        #print(corner_bot_right)
         collision = 1
         corner = 3
     
     elif corner_bot_left[0] == 255 and corner_bot_left[1] == 255 and corner_bot_left[2] == 255:
         pygame.draw.circle(screen,red,(screen_center[0] - (car_size[0]//2 * math.cos(corner_angle - angle)) , screen_center[1] - (car_size[1]//2 * math.sin(corner_angle - angle)) ), 5)
-        #print(corner_bot_left)
         collision = 1
         corner = 4
 
@@ -231,10 +222,6 @@ position = intended_trajectory[0]
 
 bg_x = -(position[0] - (screen_size[0]//2))
 bg_y = -(position[1] - (screen_size[1]//2))
-
-
-#lista_pontos =generate_motion(points[12],points[13])
-
 
 running = True
 
@@ -362,7 +349,6 @@ while running and j < len(intended_trajectory) - 3:
 
     
     if gps_status == True:
-        #print("sem erro: " + str(x[i-1]) + ", " + str(y[i-1]))
         gps_x = 0
         gps_y = 0
         for _ in range(0, 500) :
@@ -373,10 +359,7 @@ while running and j < len(intended_trajectory) - 3:
         x[i-1] = gps_x/500
         y[i-1] = gps_y/500
 
-        #print("com erro: " + str(x[i-1]) + ", " + str(y[i-1]))
-
-        vel, w, j, new_phi, new_theta = control_it(i, j, time, xref, yref, theta_ref, x, y, intended_trajectory, we, theta, v_no_filter, v, Kv, ws_no_filter, Ks, Ki, ws, h, phi, L, counter,  ws_filtered,
-	v_filtered)
+        vel, w, j, new_phi, new_theta = control_it(i, j, time, xref, yref, theta_ref, x, y, intended_trajectory, we, theta, v_no_filter, v, Kv, ws_no_filter, Ks, Ki, ws, h, phi, L, counter,  ws_filtered,	v_filtered)
     else:
         vel, w, j, new_phi, new_theta = control_it(i, j, time, xref, yref, theta_ref, x, y, intended_trajectory, we, theta, v_no_filter, v, Kv, ws_no_filter, Ks, Ki, ws, h, phi, L, counter,  ws_filtered, v_filtered)
 
@@ -458,72 +441,3 @@ plt.plot(intended_trajectory_x,intended_trajectory_y)
 plt.plot(trajectory_made_x,trajectory_made_y)
 plt.scatter(colision_points_x,colision_points_y,c = "r", marker="*")
 plt.show()
-
-
-
-"""
-#MODO: TECLAS
-
-delta_x , delta_y , new_angle = car_model(v,w, -(math.pi * angle)/180, 20, sample_rate)
-
-position = (position[0] + (delta_x ), position[1] + (delta_y ))
-
-
-angle -= new_angle
-
-keys = pygame.key.get_pressed()
-
-if keys[pygame.K_RIGHT]:
-        w += 0.1
-if keys[pygame.K_LEFT]:
-        w -= 0.1
-    
-if keys[pygame.K_UP]:
-        v += 10
-
-if keys[pygame.K_DOWN]:
-        v -= 10
-
-"""
-
-"""
-#MODO: RETAS
-
-position = lista_pontos[next_point]
-if next_point + 1 < len(lista_pontos):
-    next_point+=1
-else:
-    print(colision_counter)
-"""
-"""
-#MODO: ONLY GUIDANCE
-position = csv_list[next_point]
-if next_point + 1 < len(csv_list):
-    next_point+=1
-
-"""
-"""
-GPS
-
-intended_gps_value = (-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 )
-
-gps_x = 0
-gps_y = 0
-
-for _ in range(0, 100) :
-
-    X_x , Y_y = GPS((-bg_x + screen_size[0]//2 , -bg_y + screen_size[1]//2 ), (math.pi * angle)/180)
-
-    gps_x += X_x
-    gps_y += Y_y
-
-print("-----------------")
-print("intended_gps_value")
-print(intended_gps_value)
-print("gps")
-print((gps_x//100, gps_y//100))
-print("single measurment")
-print((X_x,Y_y))
-print("-----------------")
-
-"""

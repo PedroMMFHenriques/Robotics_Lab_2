@@ -1,3 +1,12 @@
+# Robotics lab 2, Control
+"""
+    Authors:
+    - Diogo Bento, 93045
+    - Francisco Carrilho, 93062
+    - João Batista, 93102
+    Date last modified: 31/01/2022
+"""
+
 from math import dist
 from typing import Counter
 import numpy as np
@@ -7,18 +16,17 @@ import csv
 
 def joint(xref, yref, theta_ref, x, y, index, values, counter):
 	diff_orientation = 0
-	#if index + 10 > len(values):
+
 	final_index = len(values)
 	if index<len(values)- 10:
 		final_index= index+10
 	j=index+1
-	#else:
-	#	final_index = index + 10
+
 	global control
 	control=0
 	for i in range(index,final_index):
 		diff=np.abs(theta_ref[i]-theta_ref[index])
-		if diff > (diff_orientation+np.pi/7.5):
+		if diff > (diff_orientation+np.pi/8):
 			diff_orientation=diff
 			j = i
 			control=1
@@ -26,10 +34,9 @@ def joint(xref, yref, theta_ref, x, y, index, values, counter):
 			break
 	if control==0:
 		dist_shortest = np.inf
-		#if index + 10 > len(values):
+
 		final_index = len(values)-1
-		#else:
-		#	final_index = index + 10
+
 		for i in range(index,final_index):
 			dist = np.sqrt((x-xref[i])**2 + (y-yref[i])**2)
 			if dist < dist_shortest:
@@ -73,7 +80,7 @@ def control_it(i, j, time, xref, yref, theta_ref, x, y, values, we, theta, v_no_
 	we[2] = theta_ref[k] - theta[i-1]
 
 	be = (np.dot(np.array([[np.cos(theta[i-1]),np.sin(theta[i-1]), 0], [-np.sin(theta[i-1]), np.cos(theta[i-1]), 0 ],[0 , 0, 1]]), we))
-	#v_no_filter.append(5.55*np.tanh(0.5*Kv*be[0]))
+	
 	v_no_filter.append(Kv*be[0])
 	if i < 10:
 		v_filtered.append(v_no_filter[i-1])
